@@ -13,6 +13,11 @@ commands:
       /<command> <message> - send a message to the staff chat
     permission: staffchat.access
     aliases: [adminchat, schat, achat, sc, ac, a]
+  managestaffchat:
+    description: Manage and get information about DiscordSRV-Staff-Chat
+    usage: /<command>
+    permission: staffchat.manage
+    aliases: [discordstaffchat, discordadminchat, manageadminchat, managesc, manageac, dsc, msc, dac, mac]
 
 permissions:
   staffchat.*:
