@@ -1,0 +1,25 @@
+name: ${project.name}
+version: ${project.version}
+author: RezzedUp
+
+main: ${project.groupId}.discordsrv.staffchat.StaffChatPlugin
+depend: [DiscordSRV]
+
+commands:
+  staffchat:
+    description: Toggle or send a message to staff chat.
+    usage: |-
+      /<command> - toggle automatic staff chat
+      /<command> <message> - send a message to the staff chat
+    permission: staffchat.manage
+    aliases: [adminchat, schat, achat, sc, ac, a]
+
+permissions:
+  staffchat.*:
+    children:
+      staffchat.manage: true
+      staffchat.access: true
+  staffchat.manage:
+    description: Allows players to manage the plugin in-game (e.g. reloading)
+  staffchat.access:
+    descriptions: Allows players to access the staff chat.

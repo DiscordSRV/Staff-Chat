@@ -1,0 +1,10 @@
+#
+#
+#
+#
+#
+#
+
+prefix: "&5(&dSTAFF&5)"
+discord-prefix: "&5(Discord&d: STAFF&5)"
+message-format: "%prefix%&d %name%&r: %message%"
