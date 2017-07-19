@@ -5,6 +5,7 @@ import com.rezzedup.discordsrv.staffchat.placeholders.Placeholder;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.api.Subscribe;
 import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
+import github.scarsz.discordsrv.dependencies.commons.lang3.StringUtils;
 import github.scarsz.discordsrv.dependencies.jda.core.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.core.entities.User;
 import org.bukkit.ChatColor;
@@ -149,8 +150,12 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     {
         if (event.getChannel().equals(getDiscordChannel()))
         {
-            submitFromDiscord(event.getAuthor(), event.getMessage().getContent());
             event.setCancelled(true);
+            
+            if (StringUtils.isNotBlank(event.getMessage().getRawContent()))
+            {
+                submitFromDiscord(event.getAuthor(), event.getMessage().getContent());
+            }
         }
     }
     

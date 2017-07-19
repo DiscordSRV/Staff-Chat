@@ -11,7 +11,7 @@ commands:
     usage: |-
       /<command> - toggle automatic staff chat
       /<command> <message> - send a message to the staff chat
-    permission: staffchat.manage
+    permission: staffchat.access
     aliases: [adminchat, schat, achat, sc, ac, a]
 
 permissions:
