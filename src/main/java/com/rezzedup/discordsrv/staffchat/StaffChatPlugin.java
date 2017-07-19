@@ -6,6 +6,7 @@ import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.api.Subscribe;
 import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
 import github.scarsz.discordsrv.dependencies.commons.lang3.StringUtils;
+import github.scarsz.discordsrv.dependencies.jda.core.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.core.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.core.entities.User;
 import org.bukkit.ChatColor;
@@ -67,11 +68,13 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
             .forEach(p -> p.sendMessage(content));
     }
     
-    public void updateThenAnnounce(String format, Placeholder placeholder)
+    public void updateThenAnnounce(String format, MappedPlaceholder placeholder)
     {
         // If the value of %message% doesn't exist for some reason, don't announce.
-        if ("%message%".equals(placeholder.update("%message%"))) { return; }
-        announce(placeholder.update(format));
+        if (Placeholder.isValid(placeholder.get("message"))) 
+        {
+            announce(placeholder.update(format));
+        }
     }
     
     public void submitFromInGame(Player player, String message)
@@ -84,7 +87,7 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         }
     }
     
-    public void submitFromDiscord(User user, String message)
+    public void submitFromDiscord(User user, Message message)
     {
         updateThenAnnounce(getConfig().getString("discord-message-format"), new MessagePlaceholder(user, message));
     }
@@ -150,12 +153,8 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     {
         if (event.getChannel().equals(getDiscordChannel()))
         {
+            submitFromDiscord(event.getAuthor(), event.getMessage());
             event.setCancelled(true);
-            
-            if (StringUtils.isNotBlank(event.getMessage().getRawContent()))
-            {
-                submitFromDiscord(event.getAuthor(), event.getMessage().getContent());
-            }
         }
     }
     
@@ -168,10 +167,11 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
             map("nickname", "displayname").to(player::getDisplayName);
         }
         
-        MessagePlaceholder(User user, String message)
+        MessagePlaceholder(User user, Message message)
         {
-            map("message", "content", "text").to(() -> message);
+            map("message", "content", "text").to(message::getContent);
             map("user", "name", "username", "sender").to(user::getName);
+            map("nickname", "displayname").to(message.getGuild().getMember(user)::getNickname);
             map("discriminator", "discrim").to(user::getDiscriminator);
         }
     }

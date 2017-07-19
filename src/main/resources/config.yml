@@ -7,3 +7,9 @@
 
 in-game-message-format: "&d(&5&l&oStaff&d) %name%&7:&f %message%"
 discord-message-format: "&9&ldiscord &f&m-&f>&r &d(&5&l&oStaff&d) %name%&7:&f %message%"
+
+enable-staff-chat: ""
+disable-staff-chat: ""
+
+notify-staff-chat-enabled-on-join: true
+staf-chat-enabled-notification: ""
