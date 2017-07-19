@@ -7,6 +7,11 @@ public interface Placeholder
 {
     Pattern PATTERN = Pattern.compile("%.+?%");
     
+    static boolean isValid(String result)
+    {
+        return result != null && !result.isEmpty();
+    }
+    
     String get(String placeholder);
     
     default String update(String message)
@@ -18,7 +23,7 @@ public interface Placeholder
             String match = matcher.group();
             String value = get(match.replace("%", ""));
             
-            if (value == null || value.isEmpty())
+            if (!isValid(value))
             {
                 continue;
             }

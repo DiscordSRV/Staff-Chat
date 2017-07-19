@@ -13,7 +13,7 @@ public class MappedPlaceholder implements Placeholder
     @Override
     public String get(String placeholder)
     {
-        if (placeholder == null || placeholder.isEmpty())
+        if (!Placeholder.isValid(placeholder))
         {
             return "";
         }
@@ -73,7 +73,7 @@ public class MappedPlaceholder implements Placeholder
             
             for (String alias : aliases)
             {
-                if (alias == null || alias.isEmpty())
+                if (!Placeholder.isValid(alias))
                 {
                     continue;
                 }

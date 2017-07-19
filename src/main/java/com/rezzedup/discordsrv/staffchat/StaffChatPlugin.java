@@ -4,7 +4,7 @@ import com.rezzedup.discordsrv.staffchat.placeholders.MappedPlaceholder;
 import com.rezzedup.discordsrv.staffchat.placeholders.Placeholder;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.api.Subscribe;
-import github.scarsz.discordsrv.api.events.DiscordGuildMessageReceivedEvent;
+import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
 import github.scarsz.discordsrv.dependencies.jda.core.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.core.entities.User;
 import org.bukkit.ChatColor;
@@ -27,7 +27,7 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
 {
     public static final String CHANNEL = "staff-chat"; 
     
-    private final Set<UUID> automaticStaffChat = new HashSet<>();
+    private final Set<UUID> toggles = new HashSet<>();
     
     @Override
     public void onEnable()
@@ -44,7 +44,7 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     {
         DiscordSRV.api.unsubscribe(this);
         
-        automaticStaffChat.stream()
+        toggles.stream()
             .map(id -> getServer().getPlayer(id))
             .filter(Objects::nonNull)
             .forEach(p -> p.sendMessage("Disabling staff chat..."));
@@ -66,14 +66,16 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
             .forEach(p -> p.sendMessage(content));
     }
     
-    public void updateThenAnnounce(Placeholder placeholder)
+    public void updateThenAnnounce(String format, Placeholder placeholder)
     {
-        announce(placeholder.update(getConfig().getString("message-format")));
+        // If the value of %message% doesn't exist for some reason, don't announce.
+        if ("%message%".equals(placeholder.update("%message%"))) { return; }
+        announce(placeholder.update(format));
     }
     
-    public void submit(Player player, String message)
+    public void submitFromInGame(Player player, String message)
     {
-        updateThenAnnounce(new MessagePlaceholder(player, message));
+        updateThenAnnounce(getConfig().getString("in-game-message-format"), new MessagePlaceholder(player, message));
     
         if (getDiscordChannel() != null)
         {
@@ -81,22 +83,27 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         }
     }
     
-    public void submit(User user, String message)
+    public void submitFromDiscord(User user, String message)
     {
-        updateThenAnnounce(new MessagePlaceholder(user, message));
+        updateThenAnnounce(getConfig().getString("discord-message-format"), new MessagePlaceholder(user, message));
+    }
+    
+    private void forceToggle(Player player, boolean state)
+    {
+        if (state)
+        {
+            toggles.add(player.getUniqueId());
+            player.sendMessage("Enabled automatic staff chat");
+        }
+        else if (toggles.remove(player.getUniqueId()))
+        {
+            player.sendMessage("Disabled automatic staff chat");
+        }
     }
     
     private void toggle(Player player)
     {
-        if (automaticStaffChat.remove(player.getUniqueId()))
-        {
-            player.sendMessage("Disabled automatic staff chat");
-        }
-        else 
-        {
-            automaticStaffChat.add(player.getUniqueId());
-            player.sendMessage("Enabled automatic staff chat");
-        }
+        forceToggle(player, !toggles.contains(player.getUniqueId()));
     }
     
     @Override
@@ -121,7 +128,7 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         }
         else
         {
-            submit(player, String.join(" ", args));
+            submitFromInGame(player, String.join(" ", args));
         }
         
         return true;
@@ -130,19 +137,20 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     @EventHandler(priority = EventPriority.LOWEST)
     public void onGameChat(AsyncPlayerChatEvent event)
     {
-        if (automaticStaffChat.contains(event.getPlayer().getUniqueId()))
+        if (toggles.contains(event.getPlayer().getUniqueId()))
         {
-            submit(event.getPlayer(), event.getMessage());
+            submitFromInGame(event.getPlayer(), event.getMessage());
             event.setCancelled(true);
         }
     }
     
     @Subscribe
-    public void onDiscordChat(DiscordGuildMessageReceivedEvent event)
+    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
     {
         if (event.getChannel().equals(getDiscordChannel()))
         {
-            submit(event.getAuthor(), event.getMessage().getContent());
+            submitFromDiscord(event.getAuthor(), event.getMessage().getContent());
+            event.setCancelled(true);
         }
     }
     
@@ -150,24 +158,16 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     {
         MessagePlaceholder(Player player, String message)
         {
-            setup(message);
-            
-            map("prefix").to(() -> getConfig().getString("prefix"));
-            map("user", "name", "username").to(player::getName);
+            map("message", "content", "text").to(() -> message);
+            map("user", "name", "username", "player", "sender").to(player::getName);
             map("nickname", "displayname").to(player::getDisplayName);
         }
         
         MessagePlaceholder(User user, String message)
         {
-            setup(message);
-    
-            map("prefix").to(() -> getConfig().getString("discord-prefix"));
-            map("user", "name", "username", "nickname", "displayname").to(user::getName);
-        }
-    
-        private void setup(String message)
-        {
-            map("message", "content", "msg", "text").to(() -> message);
+            map("message", "content", "text").to(() -> message);
+            map("user", "name", "username", "sender").to(user::getName);
+            map("discriminator", "discrim").to(user::getDiscriminator);
         }
     }
 }

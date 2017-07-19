@@ -5,6 +5,5 @@
 #
 #
 
-prefix: "&5(&dSTAFF&5)"
-discord-prefix: "&5(Discord&d: STAFF&5)"
-message-format: "%prefix%&d %name%&r: %message%"
+in-game-message-format: "&d(&5&l&oStaff&d) %name%&7:&f %message%"
+discord-message-format: "&9&ldiscord &f&m-&f>&r &d(&5&l&oStaff&d) %name%&7:&f %message%"
