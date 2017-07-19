@@ -114,7 +114,6 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
     {
-        // /staffchat
         if ("staffchat".equals(command.getName()))
         {
             if (sender instanceof ConsoleCommandSender)
@@ -134,40 +133,34 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
                 submitFromInGame(player, String.join(" ", args));
             }
         }
-        // /managestaffchat
-        else
+        else if ("managestaffchat".equals(command.getName()))
         {
-            if (!Permissions.any(Permissions.ALL, Permissions.MANAGE).test(sender))
+            if (args.length <= 0)
             {
-                sender.sendMessage("You don't have permission to use that.");
-            }
-            else if (args.length <= 0)
-            {
-                sender.sendMessage(color("&9&lDiscord-Staff-Chat &fv" + getDescription().getVersion() + " Usage:"));
+                sender.sendMessage(color("&9&lDiscordSRV-Staff-Chat &fv" + getDescription().getVersion() + " Usage:"));
                 sender.sendMessage(color("&f- &7/staffchat &9Toggle automatic staff chat"));
                 sender.sendMessage(color("&f- &7/staffchat <message> &9Send a message to staff chat"));
                 sender.sendMessage(color("&f- &7/" + label.toLowerCase() + " reload &9Reload the config"));
+                return true;
             }
-            else 
+            
+            switch (args[0].toLowerCase())
             {
-                switch (args[0].toLowerCase())
-                {
-                    case "reload":
-                    case "refresh":
-                    case "restart":
-                        reloadConfig();
-                        sender.sendMessage(color("&dReloaded."));
-                        break;
-                        
-                    case "help":
-                    case "?":
-                        onCommand(sender, command, label, new String[0]);
-                        break;
-                        
-                    default:
-                        sender.sendMessage(color("&6Unknown arguments."));
-                        break;
-                }
+                case "reload":
+                case "refresh":
+                case "restart":
+                    reloadConfig();
+                    sender.sendMessage(color("&9&lDiscordSRV-Staff-Chat&f: Reloaded."));
+                    break;
+                    
+                case "help":
+                case "?":
+                    onCommand(sender, command, label, new String[0]);
+                    break;
+                    
+                default:
+                    sender.sendMessage(color("&9&lDiscordSRV-Staff-Chat&f: &7&oUnknown arguments."));
+                    break;
             }
         }
         return true;

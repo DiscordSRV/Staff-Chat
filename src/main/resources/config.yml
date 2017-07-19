@@ -35,8 +35,8 @@ discord-message-format: "&9&ldiscord &f&m-&f>&r &d(&5&l&oStaff&d) %name%&7:&f %m
 #   Automatic staff-chat toggle messages.
 #
 
-enable-staff-chat: "&d(&5&l&oStaff&d) &a&m-&a> Enabled &5automatic staff chat"
-disable-staff-chat: "&d(&5&l&oStaff&d) &c&m-&c> Disabled &5automatic staff chat"
+enable-staff-chat: "&d(&5&l&oStaff&d) &a&m-&a> Enabled &fautomatic staff chat"
+disable-staff-chat: "&d(&5&l&oStaff&d) &c&m-&c> Disabled &fautomatic staff chat"
 
 #
 #   If a staff member leaves the server with automatic staff chat enabled,
@@ -45,4 +45,4 @@ disable-staff-chat: "&d(&5&l&oStaff&d) &c&m-&c> Disabled &5automatic staff chat"
 #
 
 notify-staff-chat-enabled-on-join: true
-staff-chat-enabled-notification: "&d(&5&l&oStaff&d) &a&m-&a> Automatic staff chat is enabled"
+staff-chat-enabled-notification: "&d(&5&l&oStaff&d) &a&m-&a> &fAutomatic staff chat is &aenabled"
