@@ -1,4 +1,4 @@
-# DiscordSRV Staff Chat
+# ![](http://i.imgur.com/DZwTm1u.png)
 
 DiscordSRV-Staff-Chat is a staff chat plugin that connects to a Discord channel (via [DiscordSRV](https://github.com/Scarsz/DiscordSRV)), allowing in-game staff to communicate with staff on Discord.
 
