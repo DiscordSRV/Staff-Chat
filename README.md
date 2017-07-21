@@ -2,7 +2,7 @@
 
 DiscordSRV-Staff-Chat is a staff chat plugin that connects to a Discord channel (via [DiscordSRV](https://github.com/Scarsz/DiscordSRV)), allowing in-game staff to communicate with staff on Discord.
 
-![](http://i.imgur.com/363hVvE.gif)
+![](http://i.imgur.com/363hVvE.gif) 
 
 ## Installation
 
@@ -32,7 +32,9 @@ Channels: {"global": "000000000000000000", "staff-chat": "337769984539361281"}
 
 ## Commands & Permissions
 
-## /staffchat
+### /staffchat
+
+![](http://i.imgur.com/BcjXNKl.gif)
 
 **Permission:** `staffchat.access`
 
@@ -42,7 +44,7 @@ Channels: {"global": "000000000000000000", "staff-chat": "337769984539361281"}
 * `/staffchat` - Toggle automatic staff chat.
 * `/staffchat <message>` - Send a message to the staff chat.
 
-## /managestaffchat
+### /managestaffchat
 
 **Permission:** `staffchat.manage`
 
