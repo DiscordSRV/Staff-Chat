@@ -18,8 +18,15 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -36,29 +43,124 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     
     private final Set<UUID> toggles = new HashSet<>();
     
+    private boolean isDiscordSrvHookEnabled = false;
+    
+    private Debugger debugger;
+    
     @Override
     public void onEnable()
     {
+        try
+        {
+            debugger = new Debugger();
+        }
+        catch (IOException io)
+        {
+            io.printStackTrace();
+        }
+        
+        debugger.debug("----- Starting. -----");
+        
         saveDefaultConfig();
+    
+        PluginManager plugins = getServer().getPluginManager();
+        plugins.registerEvents(this, this);
         
-        getServer().getPluginManager().registerEvents(this, this);
+        if (plugins.isPluginEnabled("DiscordSRV"))
+        {
+            debugger.debug("DiscordSRV is enabled: subscribing to API.");
+            
+            this.isDiscordSrvHookEnabled = true;
+            DiscordSRV.api.subscribe(this);
+        }
+        else 
+        {
+            debugger.debug("DiscordSRV is not enabled: not subscribing to API.");
+            
+            getLogger().warning("DiscordSRV is not currently enabled (messages will not be sent to Discord).");
+            getLogger().warning("The plugin will still work in-game, however.");
+        }
         
-        DiscordSRV.api.subscribe(this);
+        if (debugger.isEnabled)
+        {
+            getServer().getScheduler().runTask(this, debugger::logInitialState);
+        }
     }
     
     @Override
     public void onDisable()
     {
+        debugger.debug("Disabling plugin...");
+        
         toggles.stream().map(getServer()::getPlayer).filter(Objects::nonNull).forEach(this::toggle);
-        DiscordSRV.api.unsubscribe(this);
+        
+        if (isDiscordSrvHookEnabled)
+        {
+            debugger.debug("Unsubscribing from DiscordSRV's API.");
+            DiscordSRV.api.unsubscribe(this);
+        }
+        
+        debugger.debug("----- Disabled. -----");
     }
     
     public TextChannel getDiscordChannel()
     {
-        return DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL);
+        return (isDiscordSrvHookEnabled) ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL) : null;
     }
     
-    public void announce(String message)
+    @Subscribe
+    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
+    {
+        if (event.getChannel().equals(getDiscordChannel()))
+        {
+            submitFromDiscord(event.getAuthor(), event.getMessage());
+            event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onGameChat(AsyncPlayerChatEvent event)
+    {
+        if (toggles.contains(event.getPlayer().getUniqueId()))
+        {
+            if (Permissions.any(Permissions.ALL, Permissions.ACCESS).test(event.getPlayer()))
+            {
+                debugger.debug("Player %s has automatic staff-chat enabled.", event.getPlayer().getName());
+                
+                submitFromInGame(event.getPlayer(), event.getMessage());
+                event.setCancelled(true);
+            }
+            else
+            {
+                debugger.debug
+                (
+                    "Player %s has automatic staff-chat enabled but they don't have permission to use the staff chat.",
+                    event.getPlayer().getName()
+                );
+                
+                forceToggle(event.getPlayer(), false);
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event)
+    {
+        Player player = event.getPlayer();
+        
+        boolean isNotifiable = getConfig().getBoolean("notify-staff-chat-enabled-on-join")
+            && Permissions.any(Permissions.ALL, Permissions.ACCESS).test(player)
+            && toggles.contains(player.getUniqueId());
+        
+        if (!isNotifiable) { return; }
+        
+        debugger.debug("Player %s joined: reminding them that they have automatic staff-chat enabled.", event.getPlayer().getName());
+        
+        getServer().getScheduler()
+            .runTaskLater(this, () -> player.sendMessage(color(getConfig().getString("staff-chat-enabled-notification"))), 10L);
+    }
+    
+    public void inGameAnnounce(String message)
     {
         String content = color(message);
     
@@ -68,28 +170,41 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
             .filter(Permissions.any(Permissions.ALL, Permissions.ACCESS)).forEach(p -> p.sendMessage(content));
     }
     
-    public void updateThenAnnounce(String format, MappedPlaceholder placeholder)
+    public void inGameUpdateThenAnnounce(String format, MappedPlaceholder placeholder)
     {
         // If the value of %message% doesn't exist for some reason, don't announce.
         if (Placeholder.isValid(placeholder.get("message"))) 
         {
-            announce(placeholder.update(format));
+            inGameAnnounce(placeholder.update(format));
         }
     }
     
     public void submitFromInGame(Player player, String message)
     {
-        updateThenAnnounce(getConfig().getString("in-game-message-format"), new MessagePlaceholder(player, message));
+        debugger.debug("[In-Game-Message] From:'%s' Message:'%s'", player.getName(), message);
+        
+        inGameUpdateThenAnnounce(getConfig().getString("in-game-message-format"), new MessagePlaceholder(player, message));
     
         if (getDiscordChannel() != null)
         {
+            debugger.debug("Sending message to discord channel: %s => %s", CHANNEL, getDiscordChannel());
             DiscordSRV.getPlugin().processChatMessage(player, message, CHANNEL, false);
+        }
+        else 
+        {
+            debugger.debug("Unable to send message to discord: %s => null", CHANNEL);
         }
     }
     
     public void submitFromDiscord(User user, Message message)
     {
-        updateThenAnnounce(getConfig().getString("discord-message-format"), new MessagePlaceholder(user, message));
+        debugger.debug
+        (
+            "[Discord-Message] From:'%s#%s' Channel:'%s' Message:'%s'",
+            user.getName(), user.getDiscriminator(), message.getChannel(), message
+        );
+        
+        inGameUpdateThenAnnounce(getConfig().getString("discord-message-format"), new MessagePlaceholder(user, message));
     }
     
     private void forceToggle(Player player, boolean state)
@@ -98,11 +213,13 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         {
             toggles.add(player.getUniqueId());
             player.sendMessage(color(getConfig().getString("enable-staff-chat")));
+            debugger.debug("Enabled automatic staff-chat for player %s", player.getName());
         }
         else
         {
             toggles.remove(player.getUniqueId());
             player.sendMessage(color(getConfig().getString("disable-staff-chat")));
+            debugger.debug("Disabled automatic staff-chat for player %s", player.getName());
         }
     }
     
@@ -141,71 +258,66 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
                 sender.sendMessage(color("&f- &7/staffchat &9Toggle automatic staff chat"));
                 sender.sendMessage(color("&f- &7/staffchat <message> &9Send a message to staff chat"));
                 sender.sendMessage(color("&f- &7/" + label.toLowerCase() + " reload &9Reload the config"));
+                sender.sendMessage(color("&f- &7/" + label.toLowerCase() + " debug &9Toggle debugging"));
+                
+                if (debugger.isEnabled)
+                {
+                    sender.sendMessage(color("&aDebugging is currently enabled."));
+                }
+                else 
+                {
+                    sender.sendMessage(color("&cDebugging is currently disabled."));
+                }
+                
                 return true;
             }
             
             switch (args[0].toLowerCase())
             {
-                case "reload":
-                case "refresh":
-                case "restart":
+                case "reload": case "refresh": case "restart":
+                {
+                    debugger.debug("Reloading config...");
                     reloadConfig();
+                    debugger.logInitialState();
                     sender.sendMessage(color("&9&lDiscordSRV-Staff-Chat&f: Reloaded."));
                     break;
+                }
+                
+                case "debug":
+                {
+                    debugger.toggle();
                     
-                case "help":
-                case "?":
+                    if (debugger.isEnabled)
+                    {
+                        sender.sendMessage(color("&aEnabled debugging."));
+                        
+                        if (sender instanceof Player)
+                        {
+                            sender.sendMessage("Sending a test message...");
+                            getServer().dispatchCommand(sender, "staffchat Hello! Just testing things...");
+                        }
+                    }
+                    else 
+                    {
+                        sender.sendMessage(color("&cDisabled debugging."));
+                    }
+                    break;
+                }
+                
+                case "help": case "?":
+                {
                     onCommand(sender, command, label, new String[0]);
                     break;
-                    
+                }
+                
                 default:
+                {
                     sender.sendMessage(color("&9&lDiscordSRV-Staff-Chat&f: &7&oUnknown arguments."));
                     break;
+                }
             }
         }
         return true;
-    }
-    
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onGameChat(AsyncPlayerChatEvent event)
-    {
-        if (toggles.contains(event.getPlayer().getUniqueId()))
-        {
-            if (Permissions.any(Permissions.ALL, Permissions.ACCESS).test(event.getPlayer()))
-            {
-                submitFromInGame(event.getPlayer(), event.getMessage());
-                event.setCancelled(true);
-            }
-            else 
-            {
-                forceToggle(event.getPlayer(), false);
-            }
-        }
-    }
-    
-    @Subscribe
-    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
-    {
-        if (event.getChannel().equals(getDiscordChannel()))
-        {
-            submitFromDiscord(event.getAuthor(), event.getMessage());
-            event.setCancelled(true);
-        }
-    }
-    
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event)
-    {
-        Player player = event.getPlayer();
-        
-        boolean isNotifiable = getConfig().getBoolean("notify-staff-chat-enabled-on-join")
-            && Permissions.any(Permissions.ALL, Permissions.ACCESS).test(player)
-            && toggles.contains(player.getUniqueId());
-        
-        if (!isNotifiable) { return; }
-        
-        getServer().getScheduler()
-            .runTaskLater(this, () -> player.sendMessage(color(getConfig().getString("staff-chat-enabled-notification"))), 10L);
     }
     
     public class MessagePlaceholder extends MappedPlaceholder
@@ -223,6 +335,79 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
             map("user", "name", "username", "sender").to(user::getName);
             map("nickname", "displayname").to(message.getGuild().getMember(user)::getNickname);
             map("discriminator", "discrim").to(user::getDiscriminator);
+        }
+    }
+    
+    private class Debugger
+    {
+        final DateTimeFormatter timestamp = DateTimeFormatter.ofPattern("YYYY-MM-dd => HH:mm:ss");
+        
+        final Path debugToggleFile;
+        final Path debugLogFile;
+        
+        boolean isEnabled;
+        
+        Debugger() throws IOException
+        {
+            Path root = StaffChatPlugin.this.getDataFolder().toPath();
+            
+            this.debugToggleFile = root.resolve("debugging-is-enabled");
+            this.debugLogFile = root.resolve("debug.log");
+            
+            this.isEnabled = Files.isRegularFile(debugToggleFile);
+        }
+        
+        void toggle()
+        {
+            if (!isEnabled)
+            {
+                isEnabled = true;
+                debug("===== Enabled Debugging. =====");
+                
+                try { Files.createFile(debugToggleFile); }
+                catch (IOException io) { io.printStackTrace(); }
+            }
+            else 
+            {
+                debug("===== Disabled debugging. =====");
+                isEnabled = false;
+                
+                try { Files.deleteIfExists(debugToggleFile); }
+                catch (IOException io) { io.printStackTrace(); }
+            }
+        }
+        
+        String now()
+        {
+            return OffsetDateTime.now().format(timestamp);
+        }
+        
+        void debug(String message, Object ... placeholders)
+        {
+            if (!isEnabled) { return; }
+            
+            String content = String.format(message, placeholders);
+            
+            try
+            {
+                if (!Files.isRegularFile(debugLogFile))
+                {
+                    Files.createFile(debugLogFile);
+                }
+                Files.write(debugLogFile, String.format("[%s]: %s\n", now(), content).getBytes(), StandardOpenOption.APPEND);
+            }
+            catch (IOException io)
+            {
+                io.printStackTrace();
+            }
+            
+            StaffChatPlugin.this.getLogger().info(String.format("[Debug] " + message, placeholders));
+        }
+        
+        void logInitialState()
+        {
+            debug(" - isDiscordSrvHookEnabled: %s", isDiscordSrvHookEnabled);
+            debug(" - Discord channel: %s => %s", CHANNEL, getDiscordChannel());
         }
     }
 }

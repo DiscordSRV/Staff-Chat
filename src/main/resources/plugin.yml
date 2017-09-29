@@ -3,7 +3,7 @@ version: ${project.version}
 author: RezzedUp
 
 main: ${project.groupId}.discordsrv.staffchat.StaffChatPlugin
-depend: [DiscordSRV]
+softdepend: [DiscordSRV]
 
 commands:
   staffchat:
