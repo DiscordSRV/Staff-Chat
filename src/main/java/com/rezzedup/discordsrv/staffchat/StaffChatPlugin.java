@@ -43,6 +43,8 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     
     private final Set<UUID> toggles = new HashSet<>();
     
+    private final DiscordListener discord = new DiscordListener();
+    
     private boolean isDiscordSrvHookEnabled = false;
     
     private Debugger debugger;
@@ -64,14 +66,14 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         saveDefaultConfig();
     
         PluginManager plugins = getServer().getPluginManager();
-        plugins.registerEvents(this, this);
+        plugins.registerEvents(new InGameListener(), this);
         
         if (plugins.isPluginEnabled("DiscordSRV"))
         {
             debugger.debug("DiscordSRV is enabled: subscribing to API.");
             
             this.isDiscordSrvHookEnabled = true;
-            DiscordSRV.api.subscribe(this);
+            DiscordSRV.api.subscribe(discord);
         }
         else 
         {
@@ -97,7 +99,7 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         if (isDiscordSrvHookEnabled)
         {
             debugger.debug("Unsubscribing from DiscordSRV's API.");
-            DiscordSRV.api.unsubscribe(this);
+            DiscordSRV.api.unsubscribe(discord);
         }
         
         debugger.debug("----- Disabled. -----");
@@ -106,58 +108,6 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     public TextChannel getDiscordChannel()
     {
         return (isDiscordSrvHookEnabled) ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL) : null;
-    }
-    
-    @Subscribe
-    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
-    {
-        if (event.getChannel().equals(getDiscordChannel()))
-        {
-            submitFromDiscord(event.getAuthor(), event.getMessage());
-            event.setCancelled(true);
-        }
-    }
-    
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onGameChat(AsyncPlayerChatEvent event)
-    {
-        if (toggles.contains(event.getPlayer().getUniqueId()))
-        {
-            if (Permissions.any(Permissions.ALL, Permissions.ACCESS).test(event.getPlayer()))
-            {
-                debugger.debug("Player %s has automatic staff-chat enabled.", event.getPlayer().getName());
-                
-                submitFromInGame(event.getPlayer(), event.getMessage());
-                event.setCancelled(true);
-            }
-            else
-            {
-                debugger.debug
-                (
-                    "Player %s has automatic staff-chat enabled but they don't have permission to use the staff chat.",
-                    event.getPlayer().getName()
-                );
-                
-                forceToggle(event.getPlayer(), false);
-            }
-        }
-    }
-    
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event)
-    {
-        Player player = event.getPlayer();
-        
-        boolean isNotifiable = getConfig().getBoolean("notify-staff-chat-enabled-on-join")
-            && Permissions.any(Permissions.ALL, Permissions.ACCESS).test(player)
-            && toggles.contains(player.getUniqueId());
-        
-        if (!isNotifiable) { return; }
-        
-        debugger.debug("Player %s joined: reminding them that they have automatic staff-chat enabled.", event.getPlayer().getName());
-        
-        getServer().getScheduler()
-            .runTaskLater(this, () -> player.sendMessage(color(getConfig().getString("staff-chat-enabled-notification"))), 10L);
     }
     
     public void inGameAnnounce(String message)
@@ -170,7 +120,7 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
             .filter(Permissions.any(Permissions.ALL, Permissions.ACCESS)).forEach(p -> p.sendMessage(content));
     }
     
-    public void inGameUpdateThenAnnounce(String format, MappedPlaceholder placeholder)
+    private void inGameUpdateThenAnnounce(String format, MappedPlaceholder placeholder)
     {
         // If the value of %message% doesn't exist for some reason, don't announce.
         if (Placeholder.isValid(placeholder.get("message"))) 
@@ -320,7 +270,67 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         return true;
     }
     
-    public class MessagePlaceholder extends MappedPlaceholder
+    class DiscordListener
+    {
+        @Subscribe
+        public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
+        {
+            if (event.getChannel().equals(getDiscordChannel()))
+            {
+                submitFromDiscord(event.getAuthor(), event.getMessage());
+                event.setCancelled(true);
+            }
+        }
+    }
+    
+    class InGameListener implements Listener
+    {
+        @EventHandler(priority = EventPriority.LOWEST)
+        public void onGameChat(AsyncPlayerChatEvent event)
+        {
+            if (!toggles.contains(event.getPlayer().getUniqueId()))
+            {
+                return;
+            }
+            
+            if (Permissions.any(Permissions.ALL, Permissions.ACCESS).test(event.getPlayer()))
+            {
+                debugger.debug("Player %s has automatic staff-chat enabled.", event.getPlayer().getName());
+                
+                submitFromInGame(event.getPlayer(), event.getMessage());
+                event.setCancelled(true);
+            }
+            else
+            {
+                debugger.debug
+                (
+                    "Player %s has automatic staff-chat enabled but they don't have permission to use the staff chat.",
+                    event.getPlayer().getName()
+                );
+                
+                forceToggle(event.getPlayer(), false);
+            }
+        }
+        
+        @EventHandler
+        public void onPlayerJoin(PlayerJoinEvent event)
+        {
+            Player player = event.getPlayer();
+            
+            boolean isNotifiable = getConfig().getBoolean("notify-staff-chat-enabled-on-join")
+                && Permissions.any(Permissions.ALL, Permissions.ACCESS).test(player)
+                && toggles.contains(player.getUniqueId());
+            
+            if (!isNotifiable) { return; }
+            
+            debugger.debug("Player %s joined: reminding them that they have automatic staff-chat enabled.", event.getPlayer().getName());
+            
+            getServer().getScheduler()
+                .runTaskLater(StaffChatPlugin.this, () -> player.sendMessage(color(getConfig().getString("staff-chat-enabled-notification"))), 10L);
+        }
+    }
+    
+    class MessagePlaceholder extends MappedPlaceholder
     {
         MessagePlaceholder(Player player, String message)
         {
