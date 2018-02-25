@@ -42,7 +42,7 @@
         <dependency>
             <groupId>github.scarsz.discordsrv</groupId>
             <artifactId>DiscordSRV</artifactId>
-            <version>15.4</version>
+            <version>16.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
