@@ -2,6 +2,7 @@ package com.rezzedup.discordsrv.staffchat;
 
 import com.rezzedup.discordsrv.staffchat.placeholders.MappedPlaceholder;
 import com.rezzedup.discordsrv.staffchat.placeholders.Placeholder;
+import com.vdurmont.emoji.EmojiParser;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.api.Subscribe;
 import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
@@ -341,7 +342,10 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         
         MessagePlaceholder(User user, Message message)
         {
-            map("message", "content", "text").to(message::getContent);
+            // Emoji Unicode -> Alias (library included with DiscordSRV)
+            String text = EmojiParser.parseToAliases(message.getContentStripped());
+            
+            map("message", "content", "text").to(() -> text);
             map("user", "name", "username", "sender").to(user::getName);
             map("nickname", "displayname").to(message.getGuild().getMember(user)::getNickname);
             map("discriminator", "discrim").to(user::getDiscriminator);

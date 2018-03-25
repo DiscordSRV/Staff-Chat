@@ -3,25 +3,32 @@
 #
 #   ---
 #
-#   This plugin *requires* DiscordSRV.
-#   (It won't load without it)
+#   This plugin *requires* DiscordSRV in order to access Discord.
+#   It will, however, work just fine in-game regardless whether DiscordSRV is installed or not.
 #   
 #   ---
 #
-#   Installation:
-#   - Install this plugin and DiscordSRV
-#   - Add a 'staff-chat' channel to DiscordSRV's config
-#     Example:
+#   Installation (Discord Setup):
+#
+#   - 1) Install this plugin and DiscordSRV
+#
+#   - 2) Add a 'staff-chat' channel to DiscordSRV's config
+#
+#     EXAMPLE:
 #         # Channel links from game to Discord
 #         # Replace '00000000000' with your channel's id
 #         Channels: {"global": "00000000000", "staff-chat": "00000000000"}
 #         #                                        ^              ^
 #         #                         All staff chat messages will be sent to this channel.
-#     Note:
-#     The channel's name can be anything on discord (since DiscordSRV uses its channel id), but
-#     it MUST be called 'staff-chat' in the config.
-#   - Restart the server
-#   - Give staff ranks permission to use the staff chat: 'staffchat.access'
+#
+#     IMPORTANT NOTE:
+#         The channel's name can be anything on discord (since DiscordSRV uses its channel id) ...
+#         However, it MUST be called 'staff-chat' in the config.
+#         **This is very important!**
+#
+#   - 3) Restart the server
+#
+#   - 4) Give staff ranks permission to use the staff chat: 'staffchat.access'
 #
 #   ---
 #

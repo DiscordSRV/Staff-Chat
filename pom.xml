@@ -7,7 +7,7 @@
     <groupId>com.rezzedup</groupId>
     <artifactId>discordsrv-staff-chat</artifactId>
     <name>DiscordSRV-Staff-Chat</name>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 
     <repositories>
         <!-- 
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>github.scarsz.discordsrv</groupId>
             <artifactId>DiscordSRV</artifactId>
-            <version>16.0</version>
+            <version>1.16.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
