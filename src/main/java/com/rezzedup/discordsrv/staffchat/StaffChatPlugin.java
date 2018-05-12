@@ -95,7 +95,7 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     {
         debugger.debug("Disabling plugin...");
         
-        toggles.stream().map(getServer()::getPlayer).filter(Objects::nonNull).forEach(this::toggle);
+        getServer().getOnlinePlayers().stream().filter(this::isChatToggled).forEach(this::toggle);
         
         if (isDiscordSrvHookEnabled)
         {
@@ -158,6 +158,11 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         inGameUpdateThenAnnounce(getConfig().getString("discord-message-format"), new MessagePlaceholder(user, message));
     }
     
+    public boolean isChatToggled(Player player)
+    {
+        return toggles.contains(player.getUniqueId());
+    }
+    
     private void forceToggle(Player player, boolean state)
     {
         if (state)
@@ -176,7 +181,7 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
     
     private void toggle(Player player)
     {
-        forceToggle(player, !toggles.contains(player.getUniqueId()));
+        forceToggle(player, !isChatToggled(player));
     }
     
     @Override
@@ -289,7 +294,7 @@ public class StaffChatPlugin extends JavaPlugin implements Listener
         @EventHandler(priority = EventPriority.LOWEST)
         public void onGameChat(AsyncPlayerChatEvent event)
         {
-            if (!toggles.contains(event.getPlayer().getUniqueId()))
+            if (!isChatToggled(event.getPlayer()))
             {
                 return;
             }
