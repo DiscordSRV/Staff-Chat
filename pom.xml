@@ -8,6 +8,10 @@
     <artifactId>discordsrv-staff-chat</artifactId>
     <name>DiscordSRV-Staff-Chat</name>
     <version>1.1.2</version>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <repositories>
         <!-- 
@@ -21,8 +25,8 @@
         Scarsz Repo
         -->
         <repository>
-            <id>Scarsz-Jenkins</id>
-            <url>http://ci.scarsz.me/plugin/repository/everything/</url>
+            <id>scarsz-nexus</id>
+            <url>https://nexus.scarsz.me/content/repositories/public/</url>
         </repository>
     </repositories>
 
@@ -33,31 +37,31 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.12.2-R0.1-SNAPSHOT</version>
+            <version>1.13-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <!-- 
         DiscordSRV
         -->
         <dependency>
-            <groupId>github.scarsz.discordsrv</groupId>
-            <artifactId>DiscordSRV</artifactId>
-            <version>1.16.1</version>
+            <groupId>com.discordsrv</groupId>
+            <artifactId>discordsrv</artifactId>
+            <version>1.16.6</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
 
     <build>
-        <defaultGoal>clean install</defaultGoal>
+        <defaultGoal>install</defaultGoal>
         <finalName>${project.name}-${project.version}</finalName>
         <plugins>
             <!-- 
-            Compile project 
+            Compile project
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0</version>
+                <version>3.8.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
