@@ -67,10 +67,4 @@ public class Debugger
         }
         catch (IOException io) { io.printStackTrace(); }
     }
-    
-    void logDiscordHookState()
-    {
-        debug(" - isDiscordSrvHookEnabled: %s", plugin.isDiscordSrvHookEnabled());
-        debug(" - Discord channel: %s => %s", StaffChatPlugin.CHANNEL, plugin.getDiscordChannel());
-    }
 }

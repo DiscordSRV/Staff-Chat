@@ -38,8 +38,6 @@ public class StaffChatPlugin extends JavaPlugin
         getServer().getPluginManager().registerEvents(inGameToggles, this);
         saveDefaultConfig();
         checkForDiscordSrvThenSubscribe();
-        
-        if (debugger.isEnabled()) { getServer().getScheduler().runTask(this, debugger::logDiscordHookState); }
     }
     
     @Override
@@ -113,7 +111,7 @@ public class StaffChatPlugin extends JavaPlugin
     
     public void submitFromInGame(Player player, String message)
     {
-        debugger.debug("[In-Game-Message] From:'%s' Message:'%s'", player.getName(), message);
+        debugger.debug("[In-Game-Message] From:\"%s\" Message:\"%s\"", player.getName(), message);
     
         MappedPlaceholder placholders = new MappedPlaceholder();
     
@@ -138,7 +136,7 @@ public class StaffChatPlugin extends JavaPlugin
     public void submitFromDiscord(User user, Message message)
     {
         debugger.debug(
-            "[Discord-Message] From:'%s#%s' Channel:'%s' Message:'%s'",
+            "[Discord-Message] From:\"%s#%s\" Channel:\"%s\" Message:\"%s\"",
             user.getName(), user.getDiscriminator(), message.getChannel(), message
         );
     
@@ -196,7 +194,6 @@ public class StaffChatPlugin extends JavaPlugin
                     debugger.debug("Reloading config...");
                     reloadConfig();
                     checkForDiscordSrvThenSubscribe();
-                    debugger.logDiscordHookState();
                     sender.sendMessage(colorful("&9&lDiscordSRV-Staff-Chat&f: Reloaded."));
                     break;
                 }
@@ -207,7 +204,6 @@ public class StaffChatPlugin extends JavaPlugin
                     
                     if (debugger.isEnabled())
                     {
-                        debugger.logDiscordHookState();
                         sender.sendMessage(colorful("&aEnabled debugging."));
                         
                         if (sender instanceof Player)
