@@ -2,9 +2,6 @@ package com.rezzedup.discordsrv.staffchat;
 
 import org.bukkit.permissions.Permissible;
 
-import java.util.Arrays;
-import java.util.function.Predicate;
-
 public enum Permissions
 {
     ALL("*"),

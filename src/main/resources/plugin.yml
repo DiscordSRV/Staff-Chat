@@ -2,7 +2,7 @@ name: ${project.name}
 version: ${project.version}
 author: RezzedUp
 
-main: ${project.groupId}.discordsrv.staffchat.StaffChatPlugin
+main: com.rezzedup.discordsrv.staffchat.StaffChatPlugin
 softdepend: [DiscordSRV]
 
 commands:
