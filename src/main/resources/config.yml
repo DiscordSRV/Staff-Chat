@@ -12,7 +12,7 @@
 #
 #   - 1) Install this plugin and DiscordSRV
 #
-#   - 2) Add a 'staff-chat' channel to DiscordSRV's config
+#   - 2) Add a "staff-chat" channel to DiscordSRV's config
 #
 #     EXAMPLE:
 #         # Channel links from game to Discord
@@ -23,7 +23,7 @@
 #
 #     IMPORTANT NOTE:
 #         The channel's name can be anything on discord (since DiscordSRV uses its channel id) ...
-#         However, it MUST be called 'staff-chat' in the config.
+#         However, it MUST be called "staff-chat" in the config.
 #         **This is very important!**
 #
 #   - 3) Restart the server
@@ -33,17 +33,18 @@
 #   ---
 #
 #   This config can be reloaded in-game with: '/managestaffchat reload'
+#   (Be sure to give yourself permission to manage the staff chat with: 'staffchat.manage')
 #
 
 in-game-message-format: "&d(&5&l&oStaff&d) %name%&7:&f %message%"
-discord-message-format: "&9&ldiscord &f&m-&f>&r &d(&5&l&oStaff&d) %name%&7:&f %message%"
+discord-message-format: "&9&ldiscord &f-&f>&r &d(&5&l&oStaff&d) %name%&7:&f %message%"
 
 #
 #   Automatic staff-chat toggle messages.
 #
 
-enable-staff-chat: "&d(&5&l&oStaff&d) &a&m-&a> Enabled &fautomatic staff chat"
-disable-staff-chat: "&d(&5&l&oStaff&d) &c&m-&c> Disabled &fautomatic staff chat"
+enable-staff-chat: "&d(&5&l&oStaff&d) &a-&a> Enabled &fautomatic staff chat"
+disable-staff-chat: "&d(&5&l&oStaff&d) &c-&c> Disabled &fautomatic staff chat"
 
 #
 #   If a staff member leaves the server with automatic staff chat enabled,
@@ -52,4 +53,4 @@ disable-staff-chat: "&d(&5&l&oStaff&d) &c&m-&c> Disabled &fautomatic staff chat"
 #
 
 notify-staff-chat-enabled-on-join: true
-staff-chat-enabled-notification: "&d(&5&l&oStaff&d) &a&m-&a> &fAutomatic staff chat is &aenabled"
+staff-chat-enabled-notification: "&d(&5&l&oStaff&d) &a-&a> &fAutomatic staff chat is &aenabled"
