@@ -133,19 +133,16 @@ public class StaffChatPlugin extends JavaPlugin
         else { debugger.debug("Unable to send message to discord: %s => null", CHANNEL); }
     }
     
-    public void submitFromDiscord(User user, Message message)
+    public void submitFromDiscord(User user, Message message, String processedMessage)
     {
         debugger.debug(
-            "[Discord-Message] From:\"%s#%s\" Channel:\"%s\" Message:\"%s\"",
-            user.getName(), user.getDiscriminator(), message.getChannel(), message
+            "[Discord-Message] From:\"%s#%s\" Channel:\"%s\" Message:\"%s\" Processed Message:\"%s\"",
+            user.getName(), user.getDiscriminator(), message.getChannel(), message, processedMessage
         );
     
-        // Emoji Unicode -> Alias (library included with DiscordSRV)
-        String text = EmojiParser.parseToAliases(message.getContentStripped());
-        
         MappedPlaceholder placholders = new MappedPlaceholder();
         
-        placholders.map("message", "content", "text").to(() -> text);
+        placholders.map("message", "content", "text").to(() -> processedMessage);
         placholders.map("user", "name", "username", "sender").to(user::getName);
         placholders.map("nickname", "displayname").to(message.getGuild().getMember(user)::getNickname);
         placholders.map("discriminator", "discrim").to(user::getDiscriminator);
