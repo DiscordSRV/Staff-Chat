@@ -1,8 +1,10 @@
 package com.rezzedup.discordsrv.staffchat.listeners;
 
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
+import com.rezzedup.discordsrv.staffchat.api.MessageFromDiscordEvent;
 import github.scarsz.discordsrv.api.Subscribe;
 import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
+import org.bukkit.Bukkit;
 
 public class DiscordStaffChatListener
 {
@@ -15,7 +17,7 @@ public class DiscordStaffChatListener
     {
         if (event.getChannel().equals(plugin.getDiscordChannel()))
         {
-            plugin.submitFromDiscord(event.getAuthor(), event.getMessage());
+            Bukkit.getServer().getPluginManager().callEvent(new MessageFromDiscordEvent(event.getAuthor(), event.getGuild(), event.getChannel(), event.getMessage().getContentStripped()));
             event.setCancelled(true);
         }
     }

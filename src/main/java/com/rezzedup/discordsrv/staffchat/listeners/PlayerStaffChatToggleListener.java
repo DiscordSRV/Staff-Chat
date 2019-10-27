@@ -2,7 +2,9 @@ package com.rezzedup.discordsrv.staffchat.listeners;
 
 import com.rezzedup.discordsrv.staffchat.Permissions;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
+import com.rezzedup.discordsrv.staffchat.api.MessageFromGameEvent;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -50,8 +52,8 @@ public class PlayerStaffChatToggleListener implements Listener
         if (Permissions.ACCESS.isAllowedBy(event.getPlayer()))
         {
             plugin.getDebugger().debug("Player %s has automatic staff-chat enabled.", event.getPlayer().getName());
+            Bukkit.getServer().getPluginManager().callEvent(new MessageFromGameEvent(event.getPlayer(), event.getMessage()));
             
-            plugin.submitFromInGame(event.getPlayer(), event.getMessage());
             event.setCancelled(true);
         }
         else
