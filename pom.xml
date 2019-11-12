@@ -7,7 +7,7 @@
     <groupId>com.rezzedup</groupId>
     <artifactId>discordsrv-staff-chat</artifactId>
     <name>DiscordSRV-Staff-Chat</name>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
