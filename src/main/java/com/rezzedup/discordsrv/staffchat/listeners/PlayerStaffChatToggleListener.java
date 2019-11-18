@@ -50,9 +50,13 @@ public class PlayerStaffChatToggleListener implements Listener
         if (Permissions.ACCESS.isAllowedBy(event.getPlayer()))
         {
             plugin.getDebugger().debug("Player %s has automatic staff-chat enabled.", event.getPlayer().getName());
+    
+            event.setCancelled(true); // Cancel this message from getting sent to global chat.
             
-            plugin.submitFromInGame(event.getPlayer(), event.getMessage());
-            event.setCancelled(true);
+            // Handle this on the main thread next tick.
+            plugin.getServer().getScheduler().runTask(plugin, () ->
+                plugin.submitMessageFromInGame(event.getPlayer(), event.getMessage())
+            );
         }
         else
         {

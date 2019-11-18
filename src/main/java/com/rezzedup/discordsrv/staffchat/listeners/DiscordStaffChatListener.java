@@ -13,10 +13,14 @@ public class DiscordStaffChatListener
     @Subscribe
     public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
     {
-        if (event.getChannel().equals(plugin.getDiscordChannel()))
+        if (event.getChannel().equals(plugin.getDiscordChannelOrNull()))
         {
-            plugin.submitFromDiscord(event.getAuthor(), event.getMessage());
-            event.setCancelled(true);
+            event.setCancelled(true); // Cancel this message from getting sent to global chat.
+            
+            // Handle this on the main thread next tick.
+            plugin.getServer().getScheduler().runTask(plugin, () ->
+                plugin.submitMessageFromDiscord(event.getAuthor(), event.getMessage())
+            );
         }
     }
 }

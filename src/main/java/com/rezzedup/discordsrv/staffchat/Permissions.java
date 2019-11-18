@@ -4,15 +4,14 @@ import org.bukkit.permissions.Permissible;
 
 public enum Permissions
 {
-    ALL("*"),
-    MANAGE("manage"),
-    ACCESS("access");
+    MANAGE,
+    ACCESS;
     
     public static final String PREFIX = "staffchat";
     
     private final String permission;
     
-    Permissions(String permission) { this.permission = PREFIX + "." + permission; }
+    Permissions() { this.permission = PREFIX + "." + name().toLowerCase(); }
     
     public String getPermissionNode() { return this.permission; }
     

@@ -3,7 +3,7 @@ version: ${project.version}
 author: RezzedUp
 
 main: com.rezzedup.discordsrv.staffchat.StaffChatPlugin
-softdepend: [DiscordSRV]
+softdepend: [DiscordSRV, PlaceholderAPI]
 
 commands:
   staffchat:
@@ -25,6 +25,6 @@ permissions:
       staffchat.manage: true
       staffchat.access: true
   staffchat.manage:
-    description: Allows players to manage the plugin in-game (e.g. reloading)
+    description: Manage the staff chat plugin in-game (e.g. reloading)
   staffchat.access:
-    descriptions: Allows players to access the staff chat.
+    descriptions: Send and receive messages via staff chat
