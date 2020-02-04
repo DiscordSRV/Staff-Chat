@@ -37,7 +37,7 @@
 #
 
 #
-#   *If* PlaceholderAPI is installed, the in-game format will also utilize those.
+#   *If* PlaceholderAPI is installed, both in-game and discord formats will also utilize them.
 #   That plugin is not necessary for the existing placeholders in this config, however.
 #
 

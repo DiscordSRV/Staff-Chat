@@ -186,6 +186,13 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
     
         // Emoji Unicode -> Alias (library included with DiscordSRV)
         String text = EmojiParser.parseToAliases(event.getText());
+        String format = getConfig().getString("discord-message-format");
+        
+        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
+        {
+            // Update format's PAPI placeholders before inserting the message.
+            format = PlaceholderAPI.setPlaceholders(null, format);
+        }
         
         MappedPlaceholder placholders = new MappedPlaceholder();
         
@@ -194,7 +201,7 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         placholders.map("nickname", "displayname").to(message.getGuild().getMember(author)::getNickname);
         placholders.map("discriminator", "discrim").to(author::getDiscriminator);
         
-        updatePlaceholdersThenAnnounceInGame(getConfig().getString("discord-message-format"), placholders);
+        updatePlaceholdersThenAnnounceInGame(format, placholders);
     }
     
     @Override
