@@ -3,6 +3,7 @@ version: ${project.version}
 author: RezzedUp
 
 main: com.rezzedup.discordsrv.staffchat.StaffChatPlugin
+api-version: 1.13
 softdepend: [DiscordSRV, PlaceholderAPI]
 
 commands:

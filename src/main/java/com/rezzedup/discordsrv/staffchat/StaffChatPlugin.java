@@ -198,7 +198,7 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         
         placholders.map("message", "content", "text").to(() -> text);
         placholders.map("user", "name", "username", "sender").to(author::getName);
-        placholders.map("nickname", "displayname").to(message.getGuild().getMember(author)::getNickname);
+        placholders.map("nickname", "displayname").to(message.getGuild().getMember(author)::getEffectiveName);
         placholders.map("discriminator", "discrim").to(author::getDiscriminator);
         
         updatePlaceholdersThenAnnounceInGame(format, placholders);
