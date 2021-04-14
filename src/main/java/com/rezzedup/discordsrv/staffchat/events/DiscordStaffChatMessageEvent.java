@@ -1,34 +1,23 @@
 package com.rezzedup.discordsrv.staffchat.events;
 
+import com.rezzedup.discordsrv.staffchat.ChatService;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
-import org.bukkit.event.Cancellable;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import java.util.Objects;
-
 @SuppressWarnings("unused")
-public class DiscordStaffChatMessageEvent extends Event implements Cancellable
+public class DiscordStaffChatMessageEvent extends StaffChatMessageEvent<User, Message>
 {
-    private final User author;
-    private final Message message;
-    private String text;
-    
     public DiscordStaffChatMessageEvent(User author, Message message, String text)
     {
-        this.author = Objects.requireNonNull(author, "author");
-        this.message = Objects.requireNonNull(message, "message");
-        this.text = Objects.requireNonNull(text, "text");
+        super(author, message, text);
     }
     
-    public User getAuthor() { return author; }
+    @Override
+    public final ChatService getSource() { return ChatService.DISCORD; }
     
-    public Message getMessage() { return message; }
-    
-    public String getText() { return text; }
-    
-    public void setText(String text) { this.text = Objects.requireNonNull(text, "text"); }
+    @Override
+    public final ChatService getDestination() { return ChatService.MINECRAFT; }
     
     //
     //  - - - HandlerList boilerplate - - -
@@ -40,16 +29,4 @@ public class DiscordStaffChatMessageEvent extends Event implements Cancellable
     public HandlerList getHandlers() { return HANDLERS; }
     
     public static HandlerList getHandlerList() { return HANDLERS; }
-    
-    //
-    //  - - - Cancellable boilerplate - - -
-    //
-    
-    private boolean isCancelled = false;
-    
-    @Override
-    public boolean isCancelled() { return isCancelled; }
-    
-    @Override
-    public void setCancelled(boolean cancelled) { isCancelled = cancelled; }
 }

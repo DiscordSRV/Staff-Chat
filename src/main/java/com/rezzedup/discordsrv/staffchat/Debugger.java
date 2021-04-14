@@ -1,16 +1,24 @@
 package com.rezzedup.discordsrv.staffchat;
 
 import com.rezzedup.discordsrv.staffchat.util.CheckedConsumer;
+import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
+import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
+import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
+import java.util.function.Supplier;
 
 public class Debugger
 {
     private static String now() { return OffsetDateTime.now().toString(); }
+    
+    public static final DebugLogger EMPTY = message -> {};
     
     private final StaffChatPlugin plugin;
     private final Path debugToggleFile;
@@ -45,28 +53,74 @@ public class Debugger
         
         if (enabled)
         {
-            debug("===== Enabled Debugging. =====");
+            record("===== Enabled Debugging. =====");
             if (!isToggleFilePresent()) { updateToggleFile(Files::createFile); }
         }
         else
         {
-            debug("===== Disabled Debugging. =====");
+            record("===== Disabled Debugging. =====");
             updateToggleFile(Files::deleteIfExists);
         }
     }
     
-    public void debug(String message, Object ... placeholders)
+    public DebugLogger debug(Class<?> clazz)
+    {
+        return (isEnabled) ? message -> record("[" + clazz.getSimpleName() + "] " + message.get()) : EMPTY;
+    }
+    
+    private void record(String message)
     {
         if (!isEnabled) { return; }
         
-        String content = String.format(message, placeholders);
-        plugin.getLogger().info("[Debug] " + content);
+        plugin.getLogger().info("[Debug] " + message);
         
         try
         {
             if (!Files.isRegularFile(debugLogFile)) { Files.createFile(debugLogFile); }
-            Files.write(debugLogFile, ("[" + now() + "]" + content + "\n").getBytes(), StandardOpenOption.APPEND);
+            Files.write(debugLogFile, ("[" + now() + "] " + message + "\n").getBytes(), StandardOpenOption.APPEND);
         }
         catch (IOException io) { io.printStackTrace(); }
+    }
+    
+    private static String handleContext(@NullOr Object context)
+    {
+        if (context instanceof Class<?>) { return ((Class<?>) context).getSimpleName(); }
+        if (context instanceof Event) { return ((Event) context).getEventName(); }
+        return String.valueOf(context);
+    }
+    
+    @FunctionalInterface
+    public interface DebugLogger
+    {
+        void recordDebugLogEntry(Supplier<String> message);
+        
+        default void log(Supplier<String> message)
+        {
+            recordDebugLogEntry(message);
+        }
+        
+        default void log(@NullOr Object context, Supplier<String> message)
+        {
+            recordDebugLogEntry(() -> "[" + handleContext(context) + "] " + message.get());
+        }
+        
+        default void log(ChatService source, @NullOr Object context, Supplier<String> message)
+        {
+            recordDebugLogEntry(() -> source.asPrefixInBrackets(handleContext(context)) + " " + message.get());
+        }
+        
+        default void logMessageSubmissionFromInGame(Player author, String message)
+        {
+            log(ChatService.MINECRAFT, "Message", () ->
+                "from(" + author.getName() + ") message(\"" + message + "\")"
+            );
+        }
+        
+        default void logMessageSubmissionFromDiscord(User author, Message message)
+        {
+            log(ChatService.DISCORD, "Message", () ->
+                "from(" + author.getName() + "#" + author.getDiscriminator() + ") message(\"" + message.getContentStripped() + "\")"
+            );
+        }
     }
 }

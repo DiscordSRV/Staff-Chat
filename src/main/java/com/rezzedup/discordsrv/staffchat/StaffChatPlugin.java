@@ -2,6 +2,7 @@ package com.rezzedup.discordsrv.staffchat;
 
 import com.rezzedup.discordsrv.staffchat.events.DiscordStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.events.PlayerStaffChatMessageEvent;
+import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordStaffChatListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener;
 import com.rezzedup.discordsrv.staffchat.util.Events;
@@ -9,6 +10,7 @@ import com.rezzedup.discordsrv.staffchat.util.MappedPlaceholder;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.emoji.EmojiParser;
+import github.scarsz.discordsrv.dependencies.jda.api.entities.Member;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
@@ -17,6 +19,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.tlinkowski.annotation.basic.NullOr;
 
@@ -41,54 +44,78 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         this.discordChatListener = new DiscordStaffChatListener(this);
         this.inGameToggles = new PlayerStaffChatToggleListener(this);
     
-        debugger.debug("----- Starting Plugin: v%s -----", getDescription().getVersion());
+        debug(getClass()).log(() -> "----- Starting Plugin: v" + getDescription().getVersion() + " -----");
         
         getServer().getPluginManager().registerEvents(inGameToggles, this);
         saveDefaultConfig();
-        checkForDiscordSrvThenSubscribe();
+        
+        @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin("DiscordSRV");
+        
+        if (discordSrv != null)
+        {
+            debug(getClass()).log(() -> "DiscordSRV is enabled");
+            subscribeToDiscordSrv(discordSrv);
+        }
+        else
+        {
+            debug(getClass()).log(() -> "DiscordSRV is not enabled: continuing without discord support");
+            
+            getLogger().warning("DiscordSRV is not currently enabled (messages will NOT be sent to Discord).");
+            getLogger().warning("Staff chat messages will still work in-game, however.");
+            
+            // Subscribe to DiscordSRV later because it somehow wasn't enabled yet.
+            getServer().getPluginManager().registerEvents(new DiscordSrvLoadedLaterListener(this), this);
+        }
     }
     
     @Override
     public void onDisable()
     {
-        debugger.debug("Disabling plugin...");
+        debug(getClass()).log(() -> "Disabling plugin...");
         
         getServer().getOnlinePlayers().stream().filter(inGameToggles::isChatToggled).forEach(inGameToggles::toggle);
         
         if (isDiscordSrvHookEnabled)
         {
-            debugger.debug("Unsubscribing from DiscordSRV's API.");
+            debug(getClass()).log(() -> "Unsubscribing from DiscordSRV API (hook is enabled)");
             
-            try { DiscordSRV.api.unsubscribe(discordChatListener); }
+            try
+            {
+                DiscordSRV.api.unsubscribe(discordChatListener);
+                this.isDiscordSrvHookEnabled = false;
+            }
             catch (RuntimeException ignored) {} // Don't show a user-facing error if DiscordSRV is already unloaded.
         }
         
-        debugger.debug("----- Disabled. -----");
+        debug(getClass()).log(() -> "----- Disabled. -----");
     }
     
     public Debugger debugger() { return debugger; }
     
-    private void checkForDiscordSrvThenSubscribe()
+    public Debugger.DebugLogger debug(Class<?> clazz) { return debugger().debug(clazz); }
+    
+    public void subscribeToDiscordSrv(Plugin plugin)
     {
-        if (getServer().getPluginManager().isPluginEnabled("DiscordSRV"))
-        {
-            debugger.debug("DiscordSRV is enabled.");
+        debug(getClass()).log(plugin, () ->
+            "Subscribing to DiscordSRV: is hook currently enabled? " + isDiscordSrvHookEnabled
+        );
         
-            if (!isDiscordSrvHookEnabled)
-            {
-                debugger.debug("Subscribing to DiscordSRV's API...");
-                
-                this.isDiscordSrvHookEnabled = true;
-                DiscordSRV.api.subscribe(discordChatListener);
-            }
-        }
-        else
+        if (!"DiscordSRV".equals(plugin.getName()) || !(plugin instanceof DiscordSRV))
         {
-            debugger.debug("DiscordSRV is not enabled. Will continue without discord support.");
-            
-            getLogger().warning("DiscordSRV is not currently enabled (messages will not be sent to Discord).");
-            getLogger().warning("Staff chat messages will still work in-game, however.");
+            throw new IllegalArgumentException("Not DiscordSRV: " + plugin);
         }
+        
+        if (isDiscordSrvHookEnabled)
+        {
+            throw new IllegalStateException(
+                "Already subscribed to DiscordSRV. Did the server reload? ... If so, don't do that!"
+            );
+        }
+        
+        this.isDiscordSrvHookEnabled = true;
+        DiscordSRV.api.subscribe(discordChatListener);
+        
+        getLogger().info("Subscribed to DiscordSRV: messages will be sent to Discord");
     }
     
     @Override
@@ -126,19 +153,19 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         Objects.requireNonNull(author, "author");
         Objects.requireNonNull(message, "message");
         
-        debugger.debug("[In-Game-Message] From:\"%s\" Message:\"%s\"", author.getName(), message);
-    
+        debug(getClass()).logMessageSubmissionFromInGame(author, message);
+        
         PlayerStaffChatMessageEvent event =
             Events.call(new PlayerStaffChatMessageEvent(author, message));
         
         if (event.isCancelled() || event.getText().isEmpty())
         {
-            debugger.debug("[In-Game-Message] Cancelled or text is empty.");
+            debug(getClass()).log(ChatService.MINECRAFT, "Message", () -> "Cancelled or text is empty");
             return;
         }
         
         String text = event.getText();
-        String format = getConfig().getString("in-game-message-format");
+        String format = Strings.orEmpty(getConfig(), "in-game-message-format");
         
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
         {
@@ -147,24 +174,31 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
             format = PlaceholderAPI.setPlaceholders(author, format);
         }
         
-        MappedPlaceholder placholders = new MappedPlaceholder();
+        MappedPlaceholder placeholders = new MappedPlaceholder();
         
-        placholders.map("message", "content", "text").to(() -> text);
-        placholders.map("user", "name", "username", "player", "sender").to(author::getName);
-        placholders.map("nickname", "displayname").to(author::getDisplayName);
+        placeholders.map("message", "content", "text").to(() -> text);
+        placeholders.map("user", "name", "username", "player", "sender").to(author::getName);
+        placeholders.map("nickname", "displayname").to(author::getDisplayName);
         
-        updatePlaceholdersThenAnnounceInGame(format, placholders);
+        updatePlaceholdersThenAnnounceInGame(format, placeholders);
         
         if (getDiscordChannelOrNull() != null)
         {
-            debugger.debug("Sending message to discord channel: %s => %s", CHANNEL, getDiscordChannelOrNull());
+            debug(getClass()).log(ChatService.MINECRAFT, "Message", () ->
+                "Sending message to discord channel: " + CHANNEL + " => " + getDiscordChannelOrNull()
+            );
             
             // Send to discord off the main thread (just like DiscordSRV does)
             getServer().getScheduler().runTaskAsynchronously(this, () -> 
                 DiscordSRV.getPlugin().processChatMessage(author, message, CHANNEL, false)
             );
         }
-        else { debugger.debug("Unable to send message to discord: %s => null", CHANNEL); }
+        else
+        {
+            debug(getClass()).log(ChatService.MINECRAFT, "Message", () ->
+                "Unable to send message to discord: " + CHANNEL + " => null"
+            );
+        }
     }
     
     @Override
@@ -173,23 +207,20 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         Objects.requireNonNull(author, "author");
         Objects.requireNonNull(message, "message");
         
-        debugger.debug(
-            "[Discord-Message] From:\"%s#%s\" Channel:\"%s\" Message:\"%s\"",
-            author.getName(), author.getDiscriminator(), message.getChannel(), message
-        );
+        debug(getClass()).logMessageSubmissionFromDiscord(author, message);
         
         DiscordStaffChatMessageEvent event =
             Events.call(new DiscordStaffChatMessageEvent(author, message, message.getContentStripped()));
         
         if (event.isCancelled() || event.getText().isEmpty())
         {
-            debugger.debug("[Discord-Message] Cancelled or text is empty.");
+            debug(getClass()).log(ChatService.DISCORD, "Message", () -> "Cancelled or text is empty");
             return;
         }
     
         // Emoji Unicode -> Alias (library included with DiscordSRV)
         String text = EmojiParser.parseToAliases(event.getText());
-        String format = getConfig().getString("discord-message-format");
+        String format = Strings.orEmpty(getConfig(), "discord-message-format");
         
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
         {
@@ -197,14 +228,18 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
             format = PlaceholderAPI.setPlaceholders(null, format);
         }
         
-        MappedPlaceholder placholders = new MappedPlaceholder();
+        MappedPlaceholder placeholders = new MappedPlaceholder();
         
-        placholders.map("message", "content", "text").to(() -> text);
-        placholders.map("user", "name", "username", "sender").to(author::getName);
-        placholders.map("nickname", "displayname").to(message.getGuild().getMember(author)::getEffectiveName);
-        placholders.map("discriminator", "discrim").to(author::getDiscriminator);
+        placeholders.map("message", "content", "text").to(() -> text);
+        placeholders.map("user", "name", "username", "sender").to(author::getName);
+        placeholders.map("discriminator", "discrim").to(author::getDiscriminator);
         
-        updatePlaceholdersThenAnnounceInGame(format, placholders);
+        placeholders.map("nickname", "displayname").to(() -> {
+            @NullOr Member member = message.getGuild().getMember(author);
+            return (member == null ) ? "" : member.getEffectiveName();
+        });
+        
+        updatePlaceholdersThenAnnounceInGame(format, placeholders);
     }
     
     @Override
@@ -245,9 +280,8 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
             {
                 case "reload": case "refresh": case "restart":
                 {
-                    debugger.debug("Reloading config...");
+                    debug(getClass()).log(() -> "Reloading config...");
                     reloadConfig();
-                    checkForDiscordSrvThenSubscribe();
                     sender.sendMessage(colorful("&9&lDiscordSRV-Staff-Chat&f: Reloaded."));
                     break;
                 }

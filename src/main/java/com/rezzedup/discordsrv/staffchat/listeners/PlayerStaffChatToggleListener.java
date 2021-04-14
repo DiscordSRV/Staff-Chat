@@ -31,13 +31,19 @@ public class PlayerStaffChatToggleListener implements Listener
         {
             autoChatToggles.add(player.getUniqueId());
             player.sendMessage(Strings.colorful(plugin.getConfig().getString("enable-staff-chat")));
-            plugin.debugger().debug("Enabled automatic staff-chat for player %s", player.getName());
+            
+            plugin.debug(getClass()).log("Toggle", () ->
+                "Enabled automatic staff-chat for player: " + player.getName()
+            );
         }
         else
         {
             autoChatToggles.remove(player.getUniqueId());
             player.sendMessage(Strings.colorful(plugin.getConfig().getString("disable-staff-chat")));
-            plugin.debugger().debug("Disabled automatic staff-chat for player %s", player.getName());
+            
+            plugin.debug(getClass()).log("Toggle", () ->
+                "Disabled automatic staff-chat for player: " + player.getName()
+            );
         }
     }
     
@@ -50,8 +56,10 @@ public class PlayerStaffChatToggleListener implements Listener
         
         if (Permissions.ACCESS.isAllowedBy(event.getPlayer()))
         {
-            plugin.debugger().debug("Player %s has automatic staff-chat enabled.", event.getPlayer().getName());
-    
+            plugin.debug(getClass()).log(event, () ->
+                "Player " + event.getPlayer().getName() + " has automatic staff-chat enabled"
+            );
+            
             event.setCancelled(true); // Cancel this message from getting sent to global chat.
             
             // Handle this on the main thread next tick.
@@ -61,9 +69,9 @@ public class PlayerStaffChatToggleListener implements Listener
         }
         else
         {
-            plugin.debugger().debug(
-                "Player %s has automatic staff-chat enabled but they don't have permission to use the staff chat.",
-                event.getPlayer().getName()
+            plugin.debug(getClass()).log(event, () ->
+                "Player " + event.getPlayer().getName() + " has automatic staff-chat enabled " +
+                "but they don't have permission to use the staff chat"
             );
             
             forceToggle(event.getPlayer(), false);
@@ -81,17 +89,15 @@ public class PlayerStaffChatToggleListener implements Listener
         
         if (!isNotifiable) { return; }
         
-        plugin.debugger().debug(
-            "Player %s joined: reminding them that they have automatic staff-chat enabled.", 
-            event.getPlayer().getName()
+        plugin.debug(getClass()).log(event, () ->
+            "Player " + event.getPlayer().getName() + " joined: " +
+            "reminding them that they have automatic staff-chat enabled"
         );
         
         plugin.getServer().getScheduler()
             .runTaskLater(
                 plugin,
-                () -> player.sendMessage(Strings.colorful(
-                    plugin.getConfig().getString("staff-chat-enabled-notification")
-                )),
+                () -> player.sendMessage(Strings.colorful(plugin.getConfig(), "staff-chat-enabled-notification")),
                 10L
             );
     }

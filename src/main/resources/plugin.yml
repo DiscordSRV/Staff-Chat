@@ -4,6 +4,7 @@ author: RezzedUp
 
 main: com.rezzedup.discordsrv.staffchat.StaffChatPlugin
 api-version: 1.13
+load: POSTWORLD
 softdepend: [DiscordSRV, PlaceholderAPI]
 
 commands:
@@ -18,7 +19,7 @@ commands:
     description: Manage and get information about DiscordSRV-Staff-Chat
     usage: /<command>
     permission: staffchat.manage
-    aliases: [discordstaffchat, discordadminchat, manageadminchat, managesc, manageac, dsc, msc, dac, mac]
+    aliases: [discordstaffchat, discordadminchat, manageadminchat]
 
 permissions:
   staffchat.*:
