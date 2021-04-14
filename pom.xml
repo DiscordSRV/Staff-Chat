@@ -50,6 +50,13 @@
             <version>2.10.6</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Nullness Annotations: @NullOr (via maven-central) -->
+        <dependency>
+            <groupId>pl.tlinkowski.annotation</groupId>
+            <artifactId>pl.tlinkowski.annotation.basic</artifactId>
+            <version>0.2.0</version>
+            <!-- Note: scope must be visible to dependent projects otherwise nullness annotations will not work as intended -->
+        </dependency>
     </dependencies>
 
     <build>
@@ -65,30 +72,6 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
-            </plugin>
-            <!-- Exclude redundant metadata files -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/**</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
         <resources>

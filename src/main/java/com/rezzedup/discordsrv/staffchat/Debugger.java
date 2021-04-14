@@ -1,17 +1,16 @@
 package com.rezzedup.discordsrv.staffchat;
 
+import com.rezzedup.discordsrv.staffchat.util.CheckedConsumer;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class Debugger
 {
-    public static final DateTimeFormatter TIMESTAMP = DateTimeFormatter.ofPattern("YYYY-MM-dd => HH:mm:ss");
-    
-    public static String now() { return OffsetDateTime.now().format(TIMESTAMP); }
+    private static String now() { return OffsetDateTime.now().toString(); }
     
     private final StaffChatPlugin plugin;
     private final Path debugToggleFile;
@@ -25,28 +24,34 @@ public class Debugger
         Path root = plugin.getDataFolder().toPath();
         this.debugToggleFile = root.resolve("debugging-is-enabled");
         this.debugLogFile = root.resolve("debug.log");
-        this.isEnabled = Files.isRegularFile(debugToggleFile);
+        this.isEnabled = isToggleFilePresent();
+    }
+    
+    private boolean isToggleFilePresent() { return Files.isRegularFile(debugToggleFile); }
+    
+    private void updateToggleFile(CheckedConsumer<Path, IOException> update)
+    {
+        try { update.accept(debugToggleFile); }
+        catch (IOException io) { io.printStackTrace(); }
     }
     
     public boolean isEnabled() { return isEnabled; }
     
-    public void toggle()
+    public void setEnabled(boolean enabled)
     {
-        if (!isEnabled)
+        if (this.isEnabled == enabled) { return; }
+        
+        this.isEnabled = enabled;
+        
+        if (enabled)
         {
-            isEnabled = true;
             debug("===== Enabled Debugging. =====");
-            
-            try { Files.createFile(debugToggleFile); }
-            catch (IOException io) { io.printStackTrace(); }
+            if (!isToggleFilePresent()) { updateToggleFile(Files::createFile); }
         }
-        else 
+        else
         {
-            isEnabled = false;
-            debug("===== Disabled debugging. =====");
-            
-            try { Files.deleteIfExists(debugToggleFile); }
-            catch (IOException io) { io.printStackTrace(); }
+            debug("===== Disabled Debugging. =====");
+            updateToggleFile(Files::deleteIfExists);
         }
     }
     
@@ -60,10 +65,7 @@ public class Debugger
         try
         {
             if (!Files.isRegularFile(debugLogFile)) { Files.createFile(debugLogFile); }
-            
-            Files.write(
-                debugLogFile, String.format("[%s]: %s\n", now(), content).getBytes(), StandardOpenOption.APPEND
-            );
+            Files.write(debugLogFile, ("[" + now() + "]" + content + "\n").getBytes(), StandardOpenOption.APPEND);
         }
         catch (IOException io) { io.printStackTrace(); }
     }

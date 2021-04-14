@@ -4,6 +4,7 @@ import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
 import github.scarsz.discordsrv.api.Subscribe;
 import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
 
+@SuppressWarnings("unused")
 public class DiscordStaffChatListener
 {
     private final StaffChatPlugin plugin;

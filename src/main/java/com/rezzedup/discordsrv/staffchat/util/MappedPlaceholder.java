@@ -1,9 +1,12 @@
 package com.rezzedup.discordsrv.staffchat.util;
 
+import pl.tlinkowski.annotation.basic.NullOr;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,17 +15,17 @@ public class MappedPlaceholder
 {
     public static Pattern PATTERN = Pattern.compile("%.+?%");
     
-    protected final Map<String, Supplier> placeholders = new HashMap<>();
+    protected final Map<String, Supplier<?>> placeholders = new HashMap<>();
     
     public String get(String placeholder)
     {
         if (Strings.isEmptyOrNull(placeholder)) { return ""; }
         
-        Supplier supplier = placeholders.get(placeholder.toLowerCase());
+        Supplier<?> supplier = placeholders.get(placeholder.toLowerCase());
         
         if (supplier == null) { return ""; }
         
-        Object result = null;
+        @NullOr Object result = null;
         
         try { result = supplier.get(); }
         catch (Exception e) { e.printStackTrace(); }
@@ -49,10 +52,8 @@ public class MappedPlaceholder
     
     public Putter map(String ... placeholders)
     {
-        if (placeholders == null || placeholders.length <= 0)
-        {
-            throw new IllegalArgumentException("Invalid placeholders: null or empty");
-        }
+        Objects.requireNonNull(placeholders, "placeholders");
+        if (placeholders.length <= 0) { throw new IllegalArgumentException("Empty placeholders array"); }
         return new Putter(Arrays.asList(placeholders));
     }
     
@@ -64,18 +65,16 @@ public class MappedPlaceholder
         
         private Putter(List<String> aliases) { this.aliases = aliases; }
         
-        public void to(Supplier supplier)
+        public void to(Supplier<?> supplier)
         {
-            MappedPlaceholder instance = MappedPlaceholder.this;
-            
-            if (supplier == null) { return; }
+            Objects.requireNonNull(supplier, "supplier");
             
             for (String alias : aliases)
             {
                 if (Strings.isEmptyOrNull(alias)) { continue; }
                 
                 String placeholder = alias.toLowerCase();
-                instance.placeholders.put(placeholder, supplier);
+                MappedPlaceholder.this.placeholders.put(placeholder, supplier);
             }
         }
     }

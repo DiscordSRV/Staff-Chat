@@ -18,11 +18,13 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.util.Objects;
 
 import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 
+@SuppressWarnings("NotNullFieldNotInitialized")
 public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
 {
     public static final String CHANNEL = "staff-chat";
@@ -64,7 +66,7 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         debugger.debug("----- Disabled. -----");
     }
     
-    public Debugger getDebugger() { return debugger; }
+    public Debugger debugger() { return debugger; }
     
     private void checkForDiscordSrvThenSubscribe()
     {
@@ -93,10 +95,11 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
     public boolean isDiscordSrvHookEnabled() { return isDiscordSrvHookEnabled; }
     
     @Override
-    public TextChannel getDiscordChannelOrNull()
+    public @NullOr TextChannel getDiscordChannelOrNull()
     {
         return (isDiscordSrvHookEnabled) 
-            ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL) : null;
+            ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL)
+            : null;
     }
     
     private void inGameAnnounce(String message)
@@ -251,9 +254,10 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
                 
                 case "debug":
                 {
-                    debugger.toggle();
+                    boolean enabled = !debugger.isEnabled();
+                    debugger.setEnabled(enabled);
                     
-                    if (debugger.isEnabled())
+                    if (enabled)
                     {
                         sender.sendMessage(colorful("&aEnabled debugging."));
                         

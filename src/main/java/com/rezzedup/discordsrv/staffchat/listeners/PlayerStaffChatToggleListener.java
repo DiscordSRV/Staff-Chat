@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public class PlayerStaffChatToggleListener implements Listener
 {
     private final Set<UUID> autoChatToggles = new HashSet<>();
@@ -30,13 +31,13 @@ public class PlayerStaffChatToggleListener implements Listener
         {
             autoChatToggles.add(player.getUniqueId());
             player.sendMessage(Strings.colorful(plugin.getConfig().getString("enable-staff-chat")));
-            plugin.getDebugger().debug("Enabled automatic staff-chat for player %s", player.getName());
+            plugin.debugger().debug("Enabled automatic staff-chat for player %s", player.getName());
         }
         else
         {
             autoChatToggles.remove(player.getUniqueId());
             player.sendMessage(Strings.colorful(plugin.getConfig().getString("disable-staff-chat")));
-            plugin.getDebugger().debug("Disabled automatic staff-chat for player %s", player.getName());
+            plugin.debugger().debug("Disabled automatic staff-chat for player %s", player.getName());
         }
     }
     
@@ -49,7 +50,7 @@ public class PlayerStaffChatToggleListener implements Listener
         
         if (Permissions.ACCESS.isAllowedBy(event.getPlayer()))
         {
-            plugin.getDebugger().debug("Player %s has automatic staff-chat enabled.", event.getPlayer().getName());
+            plugin.debugger().debug("Player %s has automatic staff-chat enabled.", event.getPlayer().getName());
     
             event.setCancelled(true); // Cancel this message from getting sent to global chat.
             
@@ -60,7 +61,7 @@ public class PlayerStaffChatToggleListener implements Listener
         }
         else
         {
-            plugin.getDebugger().debug(
+            plugin.debugger().debug(
                 "Player %s has automatic staff-chat enabled but they don't have permission to use the staff chat.",
                 event.getPlayer().getName()
             );
@@ -80,7 +81,7 @@ public class PlayerStaffChatToggleListener implements Listener
         
         if (!isNotifiable) { return; }
         
-        plugin.getDebugger().debug(
+        plugin.debugger().debug(
             "Player %s joined: reminding them that they have automatic staff-chat enabled.", 
             event.getPlayer().getName()
         );

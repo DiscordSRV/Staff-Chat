@@ -8,6 +8,7 @@ import org.bukkit.event.HandlerList;
 
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class DiscordStaffChatMessageEvent extends Event implements Cancellable
 {
     private final User author;
@@ -18,7 +19,7 @@ public class DiscordStaffChatMessageEvent extends Event implements Cancellable
     {
         this.author = Objects.requireNonNull(author, "author");
         this.message = Objects.requireNonNull(message, "message");
-        setText(text);
+        this.text = Objects.requireNonNull(text, "text");
     }
     
     public User getAuthor() { return author; }

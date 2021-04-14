@@ -1,6 +1,7 @@
 package com.rezzedup.discordsrv.staffchat.util;
 
-import org.bukkit.ChatColor;
+import net.md_5.bungee.api.ChatColor;
+import pl.tlinkowski.annotation.basic.NullOr;
 
 public class Strings
 {
@@ -8,5 +9,5 @@ public class Strings
     
     public static String colorful(String text) { return ChatColor.translateAlternateColorCodes('&', text); }
     
-    public static boolean isEmptyOrNull(String text) { return text == null || text.isEmpty(); }
+    public static boolean isEmptyOrNull(@NullOr String text) { return text == null || text.isEmpty(); }
 }

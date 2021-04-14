@@ -7,6 +7,7 @@ import org.bukkit.event.HandlerList;
 
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class PlayerStaffChatMessageEvent extends Event implements Cancellable
 {
     private final Player author;
@@ -15,7 +16,7 @@ public class PlayerStaffChatMessageEvent extends Event implements Cancellable
     public PlayerStaffChatMessageEvent(Player author, String text)
     {
         this.author = Objects.requireNonNull(author, "author");
-        setText(text);
+        this.text = Objects.requireNonNull(text, "text");
     }
     
     public Player getAuthor() { return author; }
