@@ -4,25 +4,28 @@
 #   ---
 #
 #   This plugin *requires* DiscordSRV in order to access Discord.
-#   It will, however, work just fine in-game regardless whether DiscordSRV is installed or not.
+#   However, it will work just fine in-game regardless of whether DiscordSRV is installed or not.
 #   
 #   ---
 #
 #   Installation (Discord Setup):
 #
 #   - 1) Install this plugin and DiscordSRV
+#        Get DiscordSRV here: https://www.spigotmc.org/resources/discordsrv.18494/
 #
 #   - 2) Add a "staff-chat" channel to DiscordSRV's config
+#        (in: /plugins/DiscordSRV/config.yml)
 #
 #     EXAMPLE:
-#         # Channel links from game to Discord
-#         # Replace '00000000000' with your channel's id
-#         Channels: {"global": "00000000000", "staff-chat": "00000000000"}
-#         #                                        ^              ^
-#         #                         All staff chat messages will be sent to this channel.
+#     EXAMPLE:    # Channel links from game to Discord
+#     EXAMPLE:    # Replace the "00000000000" below with your staff channel's ID
+#     EXAMPLE:    Channels: {"global": "00000000000", "staff-chat": "00000000000"}
+#     EXAMPLE:    #                                        ^              ^
+#     EXAMPLE:    #                         All staff chat messages will be sent to this channel.
+#     EXAMPLE:
 #
 #     IMPORTANT NOTE:
-#         The channel's name can be anything on discord (since DiscordSRV uses its channel id) ...
+#         The channel's name can be anything on Discord (since DiscordSRV uses its channel ID) ...
 #         However, it MUST be called "staff-chat" in the config.
 #         **This is very important!**
 #
@@ -37,8 +40,21 @@
 #
 
 #
-#   *If* PlaceholderAPI is installed, both in-game and discord formats will also utilize them.
-#   That plugin is not necessary for the existing placeholders in this config, however.
+#   *If* PlaceholderAPI is installed, both in-game and discord formats will utilize them.
+#   That plugin is not required for the placeholders defined below.
+#
+#   In-Game Placeholders:
+#       %message%: the chat message
+#       %name%: player's name
+#       %nickname%: player's nickname if they have one (falls back to regular name)
+#
+#   Discord Placeholders:
+#       %message%: the chat message
+#       %name%: discord user's name
+#       %discriminator%: discord user's discriminator (#0000)
+#       %nickname%: discord user's nickname if they have one (falls back to regular name)
+#
+#   Hex colors are supported using the &x&R&R&G&G&B&B format.
 #
 
 in-game-message-format: "&d(&5&l&oStaff&d) %name%&7:&f %message%"

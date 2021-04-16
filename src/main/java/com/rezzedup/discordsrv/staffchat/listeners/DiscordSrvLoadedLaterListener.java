@@ -17,7 +17,8 @@ public class DiscordSrvLoadedLaterListener implements Listener
     {
         if ("DiscordSRV".equals(event.getPlugin().getName()))
         {
-            plugin.debug(getClass()).log(event, () -> "DiscordSRV loaded late.");
+            plugin.debug(getClass()).log(event, () -> "DiscordSRV loaded late: " + event.getPlugin());
+            plugin.debugger().schedulePluginStatus(getClass(), "Loaded Late");
             plugin.subscribeToDiscordSrv(event.getPlugin());
         }
     }

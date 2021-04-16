@@ -31,6 +31,8 @@ import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
 {
     public static final String CHANNEL = "staff-chat";
+    
+    public static final String DISCORDSRV = "DiscordSRV";
          
     private boolean isDiscordSrvHookEnabled = false;
     private Debugger debugger;
@@ -44,21 +46,22 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         this.discordChatListener = new DiscordStaffChatListener(this);
         this.inGameToggles = new PlayerStaffChatToggleListener(this);
     
-        debug(getClass()).log(() -> "----- Starting Plugin: v" + getDescription().getVersion() + " -----");
+        debug(getClass()).header(() -> "Starting Plugin: " + this);
+        debugger().schedulePluginStatus(getClass(), "Enable");
         
         getServer().getPluginManager().registerEvents(inGameToggles, this);
         saveDefaultConfig();
         
-        @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin("DiscordSRV");
+        @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
         
         if (discordSrv != null)
         {
-            debug(getClass()).log(() -> "DiscordSRV is enabled");
+            debug(getClass()).log("Enable", () -> "DiscordSRV is enabled");
             subscribeToDiscordSrv(discordSrv);
         }
         else
         {
-            debug(getClass()).log(() -> "DiscordSRV is not enabled: continuing without discord support");
+            debug(getClass()).log("Enable", () -> "DiscordSRV is not enabled: continuing without discord support");
             
             getLogger().warning("DiscordSRV is not currently enabled (messages will NOT be sent to Discord).");
             getLogger().warning("Staff chat messages will still work in-game, however.");
@@ -71,13 +74,13 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
     @Override
     public void onDisable()
     {
-        debug(getClass()).log(() -> "Disabling plugin...");
+        debug(getClass()).log("Disable", () -> "Disabling plugin...");
         
         getServer().getOnlinePlayers().stream().filter(inGameToggles::isChatToggled).forEach(inGameToggles::toggle);
         
         if (isDiscordSrvHookEnabled)
         {
-            debug(getClass()).log(() -> "Unsubscribing from DiscordSRV API (hook is enabled)");
+            debug(getClass()).log("Disable", () -> "Unsubscribing from DiscordSRV API (hook is enabled)");
             
             try
             {
@@ -87,7 +90,7 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
             catch (RuntimeException ignored) {} // Don't show a user-facing error if DiscordSRV is already unloaded.
         }
         
-        debug(getClass()).log(() -> "----- Disabled. -----");
+        debug(getClass()).header(() -> "Disabled Plugin: " + this);
     }
     
     public Debugger debugger() { return debugger; }
@@ -96,20 +99,18 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
     
     public void subscribeToDiscordSrv(Plugin plugin)
     {
-        debug(getClass()).log(plugin, () ->
-            "Subscribing to DiscordSRV: is hook currently enabled? " + isDiscordSrvHookEnabled
-        );
+        debug(getClass()).log("Subscribe", () -> "Subscribing to DiscordSRV: " + plugin);
         
-        if (!"DiscordSRV".equals(plugin.getName()) || !(plugin instanceof DiscordSRV))
+        if (!DISCORDSRV.equals(plugin.getName()) || !(plugin instanceof DiscordSRV))
         {
-            throw new IllegalArgumentException("Not DiscordSRV: " + plugin);
+            throw debug(getClass()).failure("Subscribe", new IllegalArgumentException("Not DiscordSRV: " + plugin));
         }
         
         if (isDiscordSrvHookEnabled)
         {
-            throw new IllegalStateException(
+            throw debug(getClass()).failure("Subscribe", new IllegalStateException(
                 "Already subscribed to DiscordSRV. Did the server reload? ... If so, don't do that!"
-            );
+            ));
         }
         
         this.isDiscordSrvHookEnabled = true;
@@ -293,12 +294,13 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
                     
                     if (enabled)
                     {
+                        debugger().schedulePluginStatus(getClass(), "Debug Toggle");
                         sender.sendMessage(colorful("&aEnabled debugging."));
                         
                         if (sender instanceof Player)
                         {
-                            sender.sendMessage("Sending a test message...");
-                            getServer().dispatchCommand(sender, "staffchat Hello! Just testing things...");
+                            sender.sendMessage("[Debug] Sending a test message...");
+                            getServer().getScheduler().runTaskLater(this, () -> getServer().dispatchCommand(sender, "staffchat Hello! Just testing things..."), 10L);
                         }
                     }
                     else { sender.sendMessage(colorful("&cDisabled debugging.")); }

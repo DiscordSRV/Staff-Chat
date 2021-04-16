@@ -5,6 +5,7 @@ import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.plugin.Plugin;
 import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ public class Debugger
 {
     private static String now() { return OffsetDateTime.now().toString(); }
     
-    public static final DebugLogger EMPTY = message -> {};
+    private static final DebugLogger DISABLED = message -> {};
     
     private final StaffChatPlugin plugin;
     private final Path debugToggleFile;
@@ -40,7 +41,7 @@ public class Debugger
     private void updateToggleFile(CheckedConsumer<Path, IOException> update)
     {
         try { update.accept(debugToggleFile); }
-        catch (IOException io) { io.printStackTrace(); }
+        catch (IOException e) { e.printStackTrace(); }
     }
     
     public boolean isEnabled() { return isEnabled; }
@@ -53,25 +54,28 @@ public class Debugger
         
         if (enabled)
         {
-            record("===== Enabled Debugging. =====");
+            printThenWriteToLogFile("========== Starting Debugger ==========");
             if (!isToggleFilePresent()) { updateToggleFile(Files::createFile); }
         }
         else
         {
-            record("===== Disabled Debugging. =====");
+            printThenWriteToLogFile("========== Disabled Debugger ==========");
             updateToggleFile(Files::deleteIfExists);
         }
     }
     
     public DebugLogger debug(Class<?> clazz)
     {
-        return (isEnabled) ? message -> record("[" + clazz.getSimpleName() + "] " + message.get()) : EMPTY;
+        return (isEnabled) ? message -> record("[" + clazz.getSimpleName() + "] " + message.get()) : DISABLED;
     }
     
     private void record(String message)
     {
-        if (!isEnabled) { return; }
-        
+        if (isEnabled) { printThenWriteToLogFile(message); }
+    }
+    
+    private void printThenWriteToLogFile(String message)
+    {
         plugin.getLogger().info("[Debug] " + message);
         
         try
@@ -79,7 +83,36 @@ public class Debugger
             if (!Files.isRegularFile(debugLogFile)) { Files.createFile(debugLogFile); }
             Files.write(debugLogFile, ("[" + now() + "] " + message + "\n").getBytes(), StandardOpenOption.APPEND);
         }
-        catch (IOException io) { io.printStackTrace(); }
+        catch (IOException e) { e.printStackTrace(); }
+    }
+    
+    public void schedulePluginStatus(Class<?> clazz, String context)
+    {
+        if (!isEnabled) { return; }
+        
+        // Log status directly on the next tick.
+        plugin.getServer().getScheduler().runTask(plugin, () -> logPluginStatus(clazz, context + " (Initial)"));
+        
+        // Log status 30 seconds after so that DiscordSRV has a chance to connect.
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> logPluginStatus(clazz, context + " (30 Seconds)"), 30 * 20L);
+    }
+    
+    private void logPluginStatus(Class<?> clazz, String context)
+    {
+        debug(clazz).recordDebugLogEntry(() ->
+        {
+            @NullOr Plugin discordSrv = plugin.getServer().getPluginManager().getPlugin(StaffChatPlugin.DISCORDSRV);
+            @NullOr Object channel = plugin.getDiscordChannelOrNull();
+            
+            boolean isDiscordSrvEnabled = discordSrv != null && discordSrv.isEnabled();
+            boolean isDiscordSrvHooked = plugin.isDiscordSrvHookEnabled();
+            boolean isChannelReady = channel != null;
+            
+            return "[Status: " + context + "] " +
+                "Is DiscordSRV installed and enabled? " + isDiscordSrvEnabled + " :: " +
+                "Is DiscordSRV hooked? " + isDiscordSrvHooked + " :: " +
+                "Is " + StaffChatPlugin.CHANNEL + " channel ready? " + isChannelReady + " (" + channel + ")";
+        });
     }
     
     private static String handleContext(@NullOr Object context)
@@ -87,6 +120,11 @@ public class Debugger
         if (context instanceof Class<?>) { return ((Class<?>) context).getSimpleName(); }
         if (context instanceof Event) { return ((Event) context).getEventName(); }
         return String.valueOf(context);
+    }
+    
+    private static String handleException(Throwable exception)
+    {
+        return exception.getClass().getSimpleName() + ": " + exception.getMessage();
     }
     
     @FunctionalInterface
@@ -121,6 +159,23 @@ public class Debugger
             log(ChatService.DISCORD, "Message", () ->
                 "from(" + author.getName() + "#" + author.getDiscriminator() + ") message(\"" + message.getContentStripped() + "\")"
             );
+        }
+        
+        default void header(Supplier<String> message)
+        {
+            recordDebugLogEntry(() -> "---------- " + message.get() + " ----------");
+        }
+        
+        default <T extends Throwable> T failure(T exception) throws T
+        {
+            log(() -> handleException(exception));
+            throw exception;
+        }
+        
+        default <T extends Throwable> T failure(@NullOr Object context, T exception) throws T
+        {
+            log(context, () -> handleException(exception));
+            throw exception;
         }
     }
 }
