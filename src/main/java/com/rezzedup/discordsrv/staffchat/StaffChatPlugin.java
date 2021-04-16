@@ -129,6 +129,8 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
             metrics.addCustomChart(new SimplePie(
                 "has_valid_staff-chat_channel", () -> String.valueOf(getDiscordChannelOrNull() != null)
             ));
+            
+            debug(getClass()).log("Metrics", () -> "Started bStats metrics");
         });
     }
     
