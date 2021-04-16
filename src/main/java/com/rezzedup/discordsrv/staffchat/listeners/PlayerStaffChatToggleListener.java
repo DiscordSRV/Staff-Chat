@@ -50,14 +50,15 @@ public class PlayerStaffChatToggleListener implements Listener
     public void toggle(Player player) { forceToggle(player, !isChatToggled(player)); }
     
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onGameChat(AsyncPlayerChatEvent event)
+    public void onToggledChat(AsyncPlayerChatEvent event)
     {
-        if (!isChatToggled(event.getPlayer())) { return; }
+        Player player = event.getPlayer();
+        if (!isChatToggled(player)) { return; }
         
-        if (Permissions.ACCESS.isAllowedBy(event.getPlayer()))
+        if (Permissions.ACCESS.allows(player))
         {
             plugin.debug(getClass()).log(event, () ->
-                "Player " + event.getPlayer().getName() + " has automatic staff-chat enabled"
+                "Player " + player.getName() + " has automatic staff-chat enabled"
             );
             
             event.setCancelled(true); // Cancel this message from getting sent to global chat.
@@ -68,7 +69,7 @@ public class PlayerStaffChatToggleListener implements Listener
         else
         {
             plugin.debug(getClass()).log(event, () ->
-                "Player " + event.getPlayer().getName() + " has automatic staff-chat enabled " +
+                "Player " + player.getName() + " has automatic staff-chat enabled " +
                 "but they don't have permission to use the staff chat"
             );
             
@@ -82,7 +83,7 @@ public class PlayerStaffChatToggleListener implements Listener
         Player player = event.getPlayer();
         
         boolean isNotifiable = plugin.getConfig().getBoolean("notify-staff-chat-enabled-on-join")
-            && Permissions.ACCESS.isAllowedBy(player)
+            && Permissions.ACCESS.allows(player)
             && autoChatToggles.contains(player.getUniqueId());
         
         if (!isNotifiable) { return; }

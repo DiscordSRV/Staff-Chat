@@ -4,6 +4,7 @@ import com.rezzedup.discordsrv.staffchat.events.DiscordStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.events.PlayerStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordStaffChatListener;
+import com.rezzedup.discordsrv.staffchat.listeners.PlayerPrefixedMessageListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener;
 import com.rezzedup.discordsrv.staffchat.util.Events;
 import com.rezzedup.discordsrv.staffchat.util.MappedPlaceholder;
@@ -23,6 +24,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.tlinkowski.annotation.basic.NullOr;
 
@@ -54,8 +56,12 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     
         debug(getClass()).header(() -> "Starting Plugin: " + this);
         debugger().schedulePluginStatus(getClass(), "Enable");
+    
+        PluginManager plugins = getServer().getPluginManager();
         
-        getServer().getPluginManager().registerEvents(inGameToggles, this);
+        plugins.registerEvents(inGameToggles, this);
+        plugins.registerEvents(new PlayerPrefixedMessageListener(this), this);
+        
         saveDefaultConfig();
         
         @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
@@ -103,7 +109,13 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     
     private void startMetrics()
     {
-        if (!getConfig().getBoolean("metrics", true)) { return; }
+        if (!getConfig().getBoolean("metrics", true))
+        {
+            debug(getClass()).log("Metrics", () -> "Aborting: metrics are disabled in the config");
+            return;
+        }
+        
+        debug(getClass()).log("Metrics", () -> "Scheduling metrics to start one minute from now");
         
         // Start a minute later to get the most accurate data.
         sync().delay(1).minutes().run(() ->
@@ -165,7 +177,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         String content = colorful(message);
         
         getServer().getOnlinePlayers().stream()
-            .filter(Permissions.ACCESS::isAllowedBy)
+            .filter(Permissions.ACCESS::allows)
             .forEach(staff -> staff.sendMessage(content));
         
         getServer().getConsoleSender().sendMessage(content);
@@ -330,15 +342,10 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
                         if (sender instanceof Player)
                         {
                             sender.sendMessage("[Debug] Sending a test message...");
-                            sync().delay(10).ticks().run(() ->
-                                getServer().dispatchCommand(sender, "staffchat Hello! Just testing things...")
-                            );
+                            getServer().getScheduler().runTaskLater(this, () -> getServer().dispatchCommand(sender, "staffchat Hello! Just testing things..."), 10L);
                         }
                     }
-                    else
-                    {
-                        sender.sendMessage(colorful("&cDisabled debugging."));
-                    }
+                    else { sender.sendMessage(colorful("&cDisabled debugging.")); }
                     break;
                 }
                 
