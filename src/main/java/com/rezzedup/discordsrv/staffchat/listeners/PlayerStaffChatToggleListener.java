@@ -63,9 +63,7 @@ public class PlayerStaffChatToggleListener implements Listener
             event.setCancelled(true); // Cancel this message from getting sent to global chat.
             
             // Handle this on the main thread next tick.
-            plugin.getServer().getScheduler().runTask(plugin, () ->
-                plugin.submitMessageFromInGame(event.getPlayer(), event.getMessage())
-            );
+            plugin.sync().run(() -> plugin.submitMessageFromInGame(event.getPlayer(), event.getMessage()));
         }
         else
         {
@@ -94,11 +92,8 @@ public class PlayerStaffChatToggleListener implements Listener
             "reminding them that they have automatic staff-chat enabled"
         );
         
-        plugin.getServer().getScheduler()
-            .runTaskLater(
-                plugin,
-                () -> player.sendMessage(Strings.colorful(plugin.getConfig(), "staff-chat-enabled-notification")),
-                10L
-            );
+        plugin.sync().delay(10).ticks().run(() ->
+            player.sendMessage(Strings.colorful(plugin.getConfig(), "staff-chat-enabled-notification"))
+        );
     }
 }

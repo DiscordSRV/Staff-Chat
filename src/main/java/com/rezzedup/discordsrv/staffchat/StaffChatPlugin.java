@@ -8,6 +8,7 @@ import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener
 import com.rezzedup.discordsrv.staffchat.util.Events;
 import com.rezzedup.discordsrv.staffchat.util.MappedPlaceholder;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
+import community.leaf.tasks.bukkit.BukkitTaskSource;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.emoji.EmojiParser;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Member;
@@ -28,7 +29,7 @@ import java.util.Objects;
 import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 
 @SuppressWarnings("NotNullFieldNotInitialized")
-public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
+public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, StaffChatAPI
 {
     public static final String CHANNEL = "staff-chat";
     
@@ -92,6 +93,9 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         
         debug(getClass()).header(() -> "Disabled Plugin: " + this);
     }
+    
+    @Override
+    public Plugin plugin() { return this; }
     
     public Debugger debugger() { return debugger; }
     
@@ -300,10 +304,15 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
                         if (sender instanceof Player)
                         {
                             sender.sendMessage("[Debug] Sending a test message...");
-                            getServer().getScheduler().runTaskLater(this, () -> getServer().dispatchCommand(sender, "staffchat Hello! Just testing things..."), 10L);
+                            sync().delay(10).ticks().run(() ->
+                                getServer().dispatchCommand(sender, "staffchat Hello! Just testing things...")
+                            );
                         }
                     }
-                    else { sender.sendMessage(colorful("&cDisabled debugging.")); }
+                    else
+                    {
+                        sender.sendMessage(colorful("&cDisabled debugging."));
+                    }
                     break;
                 }
                 
