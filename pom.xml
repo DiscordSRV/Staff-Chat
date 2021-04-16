@@ -11,6 +11,7 @@
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <shade.relocation>com.rezzedup.discordsrv.staffchat.shaded</shade.relocation>
     </properties>
 
     <repositories>
@@ -50,6 +51,12 @@
             <version>2.10.6</version>
             <scope>provided</scope>
         </dependency>
+        <!-- bStats (via maven-central) -->
+        <dependency>
+            <groupId>org.bstats</groupId>
+            <artifactId>bstats-bukkit</artifactId>
+            <version>2.2.1</version>
+        </dependency>
         <!-- Nullness Annotations: @NullOr (via maven-central) -->
         <dependency>
             <groupId>pl.tlinkowski.annotation</groupId>
@@ -72,6 +79,46 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+            <!-- Shade dependencies -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <configuration>
+                    <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.bstats</pattern>
+                            <shadedPattern>${shade.relocation}.org.bstats</shadedPattern>
+                        </relocation>
+                    </relocations>
+                    <artifactSet>
+                        <!-- Exclude annotations from built jar -->
+                        <excludes>
+                            <exclude>com.google.code.findbugs:jsr305</exclude>
+                            <exclude>org.jetbrains.kotlin:kotlin-annotations-jvm</exclude>
+                            <exclude>pl.tlinkowski.annotation:pl.tlinkowski.annotation.basic</exclude>
+                        </excludes>
+                    </artifactSet>
+                    <filters>
+                        <filter>
+                            <!-- Exclude redundant metadata files -->
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/**</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
         <resources>

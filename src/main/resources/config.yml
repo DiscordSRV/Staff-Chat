@@ -75,3 +75,10 @@ disable-staff-chat: "&d(&5&l&oStaff&d) &4->&c &nDisabled&c automatic staff chat"
 
 notify-staff-chat-enabled-on-join: true
 staff-chat-enabled-notification: "&d(&5&l&oStaff&d) &2->&a Automatic staff chat is &nenabled"
+
+#
+#   Should the plugin collect basic anonymous usage metrics?
+#   Metrics can be found at: https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056
+#
+
+metrics: true
