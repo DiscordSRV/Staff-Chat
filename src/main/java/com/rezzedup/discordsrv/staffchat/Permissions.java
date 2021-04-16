@@ -15,5 +15,7 @@ public enum Permissions
     
     public String getPermissionNode() { return this.permission; }
     
-    public boolean isAllowedBy(Permissible permissible) { return permissible.hasPermission(permission); }
+    public boolean allows(Permissible permissible) { return permissible.hasPermission(permission); }
+    
+    public boolean denies(Permissible permissible) { return !allows(permissible); }
 }

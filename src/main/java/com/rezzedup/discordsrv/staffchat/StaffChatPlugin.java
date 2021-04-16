@@ -4,6 +4,7 @@ import com.rezzedup.discordsrv.staffchat.events.DiscordStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.events.PlayerStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordStaffChatListener;
+import com.rezzedup.discordsrv.staffchat.listeners.PlayerPrefixedMessageListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener;
 import com.rezzedup.discordsrv.staffchat.util.Events;
 import com.rezzedup.discordsrv.staffchat.util.MappedPlaceholder;
@@ -15,11 +16,14 @@ import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import me.clip.placeholderapi.PlaceholderAPI;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.tlinkowski.annotation.basic.NullOr;
 
@@ -30,6 +34,9 @@ import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 @SuppressWarnings("NotNullFieldNotInitialized")
 public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
 {
+    // https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056
+    public static final int BSTATS = 11056;
+    
     public static final String CHANNEL = "staff-chat";
     
     public static final String DISCORDSRV = "DiscordSRV";
@@ -48,8 +55,12 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
     
         debug(getClass()).header(() -> "Starting Plugin: " + this);
         debugger().schedulePluginStatus(getClass(), "Enable");
+    
+        PluginManager plugins = getServer().getPluginManager();
         
-        getServer().getPluginManager().registerEvents(inGameToggles, this);
+        plugins.registerEvents(inGameToggles, this);
+        plugins.registerEvents(new PlayerPrefixedMessageListener(this), this);
+        
         saveDefaultConfig();
         
         @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
@@ -69,6 +80,8 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
             // Subscribe to DiscordSRV later because it somehow wasn't enabled yet.
             getServer().getPluginManager().registerEvents(new DiscordSrvLoadedLaterListener(this), this);
         }
+        
+        startMetrics();
     }
     
     @Override
@@ -91,6 +104,32 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         }
         
         debug(getClass()).header(() -> "Disabled Plugin: " + this);
+    }
+    
+    private void startMetrics()
+    {
+        if (!getConfig().getBoolean("metrics", true))
+        {
+            debug(getClass()).log("Metrics", () -> "Aborting: metrics are disabled in the config");
+            return;
+        }
+        
+        debug(getClass()).log("Metrics", () -> "Scheduling metrics to start one minute from now");
+        
+        getServer().getScheduler().runTaskLater(this, () ->
+        {
+            Metrics metrics = new Metrics(this, BSTATS);
+        
+            metrics.addCustomChart(new SimplePie(
+                "hooked_into_discordsrv", () -> String.valueOf(isDiscordSrvHookEnabled())
+            ));
+            
+            metrics.addCustomChart(new SimplePie(
+                "has_valid_staff-chat_channel", () -> String.valueOf(getDiscordChannelOrNull() != null)
+            ));
+            
+            debug(getClass()).log("Metrics", () -> "Started bStats metrics");
+        }, 60 * 20L); // Start a minute later to get the most accurate data.
     }
     
     public Debugger debugger() { return debugger; }
@@ -135,7 +174,7 @@ public class StaffChatPlugin extends JavaPlugin implements StaffChatAPI
         String content = colorful(message);
         
         getServer().getOnlinePlayers().stream()
-            .filter(Permissions.ACCESS::isAllowedBy)
+            .filter(Permissions.ACCESS::allows)
             .forEach(staff -> staff.sendMessage(content));
         
         getServer().getConsoleSender().sendMessage(content);
