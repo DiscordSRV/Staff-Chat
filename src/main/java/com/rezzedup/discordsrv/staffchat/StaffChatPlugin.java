@@ -105,7 +105,8 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     {
         if (!getConfig().getBoolean("metrics", true)) { return; }
         
-        getServer().getScheduler().runTaskLater(this, () ->
+        // Start a minute later to get the most accurate data.
+        sync().delay(1).minutes().run(() ->
         {
             Metrics metrics = new Metrics(this, BSTATS);
         
@@ -116,7 +117,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
             metrics.addCustomChart(new SimplePie(
                 "has_valid_staff-chat_channel", () -> String.valueOf(getDiscordChannelOrNull() != null)
             ));
-        }, 60 * 20L); // Start a minute later to get the most accurate data.
+        });
     }
     
     @Override
