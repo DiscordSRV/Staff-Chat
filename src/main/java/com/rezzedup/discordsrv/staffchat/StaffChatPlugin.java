@@ -16,6 +16,8 @@ import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import me.clip.placeholderapi.PlaceholderAPI;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -31,6 +33,9 @@ import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 @SuppressWarnings("NotNullFieldNotInitialized")
 public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, StaffChatAPI
 {
+    // https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056
+    public static final int BSTATS = 11056;
+    
     public static final String CHANNEL = "staff-chat";
     
     public static final String DISCORDSRV = "DiscordSRV";
@@ -70,6 +75,8 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
             // Subscribe to DiscordSRV later because it somehow wasn't enabled yet.
             getServer().getPluginManager().registerEvents(new DiscordSrvLoadedLaterListener(this), this);
         }
+        
+        startMetrics();
     }
     
     @Override
@@ -92,6 +99,24 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         }
         
         debug(getClass()).header(() -> "Disabled Plugin: " + this);
+    }
+    
+    private void startMetrics()
+    {
+        if (!getConfig().getBoolean("metrics", true)) { return; }
+        
+        getServer().getScheduler().runTaskLater(this, () ->
+        {
+            Metrics metrics = new Metrics(this, BSTATS);
+        
+            metrics.addCustomChart(new SimplePie(
+                "hooked_into_discordsrv", () -> String.valueOf(isDiscordSrvHookEnabled())
+            ));
+            
+            metrics.addCustomChart(new SimplePie(
+                "has_valid_staff-chat_channel", () -> String.valueOf(getDiscordChannelOrNull() != null)
+            ));
+        }, 60 * 20L); // Start a minute later to get the most accurate data.
     }
     
     @Override
