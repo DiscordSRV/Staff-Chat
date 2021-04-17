@@ -1,5 +1,7 @@
 package com.rezzedup.discordsrv.staffchat;
 
+import com.rezzedup.discordsrv.staffchat.commands.ManageStaffChatCommand;
+import com.rezzedup.discordsrv.staffchat.commands.StaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.events.DiscordStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.events.PlayerStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener;
@@ -19,9 +21,9 @@ import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -32,7 +34,6 @@ import java.util.Objects;
 
 import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 
-@SuppressWarnings("NotNullFieldNotInitialized")
 public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, StaffChatAPI
 {
     // https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056
@@ -41,28 +42,29 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     public static final String CHANNEL = "staff-chat";
     
     public static final String DISCORDSRV = "DiscordSRV";
-         
-    private boolean isDiscordSrvHookEnabled = false;
-    private Debugger debugger;
-    private DiscordStaffChatListener discordChatListener;
-    private PlayerStaffChatToggleListener inGameToggles;
+    
+    private @NullOr Debugger debugger;
+    private @NullOr ToggleData toggles;
+    private @NullOr DiscordStaffChatListener discordSrvHook;
     
     @Override
     public void onEnable()
     {
         this.debugger = new Debugger(this);
-        this.discordChatListener = new DiscordStaffChatListener(this);
-        this.inGameToggles = new PlayerStaffChatToggleListener(this);
-    
+        this.toggles = new ToggleData(this);
+        
         debug(getClass()).header(() -> "Starting Plugin: " + this);
         debugger().schedulePluginStatus(getClass(), "Enable");
+        
+        saveDefaultConfig();
     
         PluginManager plugins = getServer().getPluginManager();
         
-        plugins.registerEvents(inGameToggles, this);
         plugins.registerEvents(new PlayerPrefixedMessageListener(this), this);
+        plugins.registerEvents(new PlayerStaffChatToggleListener(this), this);
         
-        saveDefaultConfig();
+        command("staffchat", new StaffChatCommand(this));
+        command("managestaffchat", new ManageStaffChatCommand(this));
         
         @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
         
@@ -90,17 +92,14 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     {
         debug(getClass()).log("Disable", () -> "Disabling plugin...");
         
-        getServer().getOnlinePlayers().stream().filter(inGameToggles::isChatToggled).forEach(inGameToggles::toggle);
+        // Display toggle message so that auto staff-chat users are aware that their chat is public again.
+        getServer().getOnlinePlayers().stream().filter(toggles()::isChatAutomatic).forEach(toggles()::toggleAutoChat);
         
-        if (isDiscordSrvHookEnabled)
+        if (isDiscordSrvHookEnabled())
         {
             debug(getClass()).log("Disable", () -> "Unsubscribing from DiscordSRV API (hook is enabled)");
             
-            try
-            {
-                DiscordSRV.api.unsubscribe(discordChatListener);
-                this.isDiscordSrvHookEnabled = false;
-            }
+            try { DiscordSRV.api.unsubscribe(discordSrvHook); }
             catch (RuntimeException ignored) {} // Don't show a user-facing error if DiscordSRV is already unloaded.
         }
         
@@ -134,12 +133,47 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         });
     }
     
+    private void command(String name, CommandExecutor executor)
+    {
+        @NullOr PluginCommand command = getCommand(name);
+        
+        if (command == null)
+        {
+            debug(getClass()).log("Command: Setup", () ->
+                "Unable to register command /" + name + " because it is not defined in plugin.yml"
+            );
+            return;
+        }
+        
+        command.setExecutor(executor);
+        debug(getClass()).log("Command: Setup", () -> "Registered command executor for: /" + name);
+        
+        if (executor instanceof TabCompleter)
+        {
+            command.setTabCompleter((TabCompleter) executor);
+            debug(getClass()).log("Command: Setup", () -> "Registered tab completer for: /" + name);
+        }
+    }
+    
     @Override
     public Plugin plugin() { return this; }
     
-    public Debugger debugger() { return debugger; }
+    public Debugger debugger()
+    {
+        if (debugger != null) { return debugger; }
+        throw new IllegalStateException("Debugger isn't initialized (plugin unloaded?)");
+    }
     
     public Debugger.DebugLogger debug(Class<?> clazz) { return debugger().debug(clazz); }
+    
+    public ToggleData toggles()
+    {
+        if (toggles != null) { return toggles; }
+        throw new IllegalStateException("Toggles aren't initialized (plugin unloaded?)");
+    }
+    
+    @Override
+    public boolean isDiscordSrvHookEnabled() { return discordSrvHook != null; }
     
     public void subscribeToDiscordSrv(Plugin plugin)
     {
@@ -150,26 +184,22 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
             throw debug(getClass()).failure("Subscribe", new IllegalArgumentException("Not DiscordSRV: " + plugin));
         }
         
-        if (isDiscordSrvHookEnabled)
+        if (isDiscordSrvHookEnabled())
         {
             throw debug(getClass()).failure("Subscribe", new IllegalStateException(
                 "Already subscribed to DiscordSRV. Did the server reload? ... If so, don't do that!"
             ));
         }
         
-        this.isDiscordSrvHookEnabled = true;
-        DiscordSRV.api.subscribe(discordChatListener);
+        DiscordSRV.api.subscribe(discordSrvHook = new DiscordStaffChatListener(this));
         
         getLogger().info("Subscribed to DiscordSRV: messages will be sent to Discord");
     }
     
     @Override
-    public boolean isDiscordSrvHookEnabled() { return isDiscordSrvHookEnabled; }
-    
-    @Override
     public @NullOr TextChannel getDiscordChannelOrNull()
     {
-        return (isDiscordSrvHookEnabled) 
+        return (isDiscordSrvHookEnabled())
             ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL)
             : null;
     }
@@ -285,85 +315,5 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         });
         
         updatePlaceholdersThenAnnounceInGame(format, placeholders);
-    }
-    
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
-    {
-        if ("staffchat".equals(command.getName()))
-        {
-            if (sender instanceof ConsoleCommandSender)
-            {
-                sender.sendMessage("Only players may use this command.");
-                return true;
-            }
-            
-            Player player = (Player) sender;
-            
-            if (args.length <= 0) { inGameToggles.toggle(player); }
-            else { submitMessageFromInGame(player, String.join(" ", args)); }
-        }
-        else if ("managestaffchat".equals(command.getName()))
-        {
-            if (args.length <= 0)
-            {
-                sender.sendMessage(colorful(
-                    "&9&lDiscordSRV-Staff-Chat &fv" + getDescription().getVersion() + " Usage:"
-                ));
-                
-                sender.sendMessage(colorful("&f- &7/staffchat &9Toggle automatic staff chat"));
-                sender.sendMessage(colorful("&f- &7/staffchat <message> &9Send a message to staff chat"));
-                sender.sendMessage(colorful("&f- &7/" + label.toLowerCase() + " reload &9Reload the config"));
-                sender.sendMessage(colorful("&f- &7/" + label.toLowerCase() + " debug &9Toggle debugging"));
-                
-                if (debugger.isEnabled()) { sender.sendMessage(colorful("&aDebugging is currently enabled.")); }
-                else { sender.sendMessage(colorful("&cDebugging is currently disabled.")); }
-                return true;
-            }
-            
-            switch (args[0].toLowerCase())
-            {
-                case "reload": case "refresh": case "restart":
-                {
-                    debug(getClass()).log(() -> "Reloading config...");
-                    reloadConfig();
-                    sender.sendMessage(colorful("&9&lDiscordSRV-Staff-Chat&f: Reloaded."));
-                    break;
-                }
-                
-                case "debug":
-                {
-                    boolean enabled = !debugger.isEnabled();
-                    debugger.setEnabled(enabled);
-                    
-                    if (enabled)
-                    {
-                        debugger().schedulePluginStatus(getClass(), "Debug Toggle");
-                        sender.sendMessage(colorful("&aEnabled debugging."));
-                        
-                        if (sender instanceof Player)
-                        {
-                            sender.sendMessage("[Debug] Sending a test message...");
-                            getServer().getScheduler().runTaskLater(this, () -> getServer().dispatchCommand(sender, "staffchat Hello! Just testing things..."), 10L);
-                        }
-                    }
-                    else { sender.sendMessage(colorful("&cDisabled debugging.")); }
-                    break;
-                }
-                
-                case "help": case "?":
-                {
-                    onCommand(sender, command, label, new String[0]);
-                    break;
-                }
-                
-                default:
-                {
-                    sender.sendMessage(colorful("&9&lDiscordSRV-Staff-Chat&f: &7&oUnknown arguments."));
-                    break;
-                }
-            }
-        }
-        return true;
     }
 }

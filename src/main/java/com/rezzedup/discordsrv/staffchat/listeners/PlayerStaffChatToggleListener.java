@@ -1,5 +1,6 @@
 package com.rezzedup.discordsrv.staffchat.listeners;
 
+import com.rezzedup.discordsrv.staffchat.ToggleData;
 import com.rezzedup.discordsrv.staffchat.Permissions;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
@@ -10,50 +11,23 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-
 @SuppressWarnings("unused")
 public class PlayerStaffChatToggleListener implements Listener
 {
-    private final Set<UUID> autoChatToggles = new HashSet<>();
-    
     private final StaffChatPlugin plugin;
-        
-    public PlayerStaffChatToggleListener(StaffChatPlugin plugin) { this.plugin = plugin; }
+    private final ToggleData toggles;
     
-    public boolean isChatToggled(Player player) { return autoChatToggles.contains(player.getUniqueId()); }
-    
-    private void forceToggle(Player player, boolean state)
+    public PlayerStaffChatToggleListener(StaffChatPlugin plugin)
     {
-        if (state)
-        {
-            autoChatToggles.add(player.getUniqueId());
-            player.sendMessage(Strings.colorful(plugin.getConfig().getString("enable-staff-chat")));
-            
-            plugin.debug(getClass()).log("Toggle", () ->
-                "Enabled automatic staff-chat for player: " + player.getName()
-            );
-        }
-        else
-        {
-            autoChatToggles.remove(player.getUniqueId());
-            player.sendMessage(Strings.colorful(plugin.getConfig().getString("disable-staff-chat")));
-            
-            plugin.debug(getClass()).log("Toggle", () ->
-                "Disabled automatic staff-chat for player: " + player.getName()
-            );
-        }
+        this.plugin = plugin;
+        this.toggles = plugin.toggles();
     }
-    
-    public void toggle(Player player) { forceToggle(player, !isChatToggled(player)); }
     
     @EventHandler(priority = EventPriority.LOWEST)
     public void onToggledChat(AsyncPlayerChatEvent event)
     {
         Player player = event.getPlayer();
-        if (!isChatToggled(player)) { return; }
+        if (!toggles.isChatAutomatic(player)) { return; }
         
         if (Permissions.ACCESS.allows(player))
         {
@@ -73,7 +47,7 @@ public class PlayerStaffChatToggleListener implements Listener
                 "but they don't have permission to use the staff chat"
             );
             
-            forceToggle(event.getPlayer(), false);
+            toggles.setAutoChatToggle(event.getPlayer(), false);
         }
     }
     
@@ -82,9 +56,10 @@ public class PlayerStaffChatToggleListener implements Listener
     {
         Player player = event.getPlayer();
         
-        boolean isNotifiable = plugin.getConfig().getBoolean("notify-staff-chat-enabled-on-join")
-            && Permissions.ACCESS.allows(player)
-            && autoChatToggles.contains(player.getUniqueId());
+        boolean isNotifiable =
+            plugin.getConfig().getBoolean("notify-staff-chat-enabled-on-join")
+                && Permissions.ACCESS.allows(player)
+                && toggles.isChatAutomatic(player);
         
         if (!isNotifiable) { return; }
         

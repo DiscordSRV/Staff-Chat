@@ -35,17 +35,16 @@ public class PlayerPrefixedMessageListener implements Listener
         if (!message.startsWith(identifier)) { return; }
     
         String unprefixed = message.substring(identifier.length()).trim();
+        String submission = (Strings.isEmptyOrNull(unprefixed)) ? message : unprefixed;
         
         plugin.debug(getClass()).log(event, () ->
             "Sending prefixed chat from player(" + player.getName() + ") identified " +
-            "by prefix(\"" + identifier + "\"): message(\"" + unprefixed + "\")"
+            "by prefix(\"" + identifier + "\"): message(\"" + submission + "\")"
         );
         
         event.setCancelled(true); // Cancel this message from getting sent to global chat.
         
         // Handle this on the main thread next tick.
-        plugin.getServer().getScheduler().runTask(plugin, () ->
-            plugin.submitMessageFromInGame(player, (Strings.isEmptyOrNull(unprefixed)) ? message : unprefixed)
-        );
+        plugin.sync().run(() -> plugin.submitMessageFromInGame(player, submission));
     }
 }
