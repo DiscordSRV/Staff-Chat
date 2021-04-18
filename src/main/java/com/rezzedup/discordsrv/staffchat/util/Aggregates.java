@@ -8,9 +8,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -20,43 +22,7 @@ public class Aggregates
 {
     private Aggregates() { throw new UnsupportedOperationException(); }
     
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    public @interface Result {}
-    
-    public static class MatchRules
-    {
-        private final Set<String> all = new HashSet<>();
-        private final Set<String> any = new HashSet<>();
-        private final Set<String> not = new HashSet<>();
-        
-        private MatchRules() {}
-        
-        public MatchRules all(String ... required)
-        {
-            Collections.addAll(all, required);
-            return this;
-        }
-        
-        public MatchRules any(String ... optional)
-        {
-            Collections.addAll(any, optional);
-            return this;
-        }
-        
-        public MatchRules not(String ... excluded)
-        {
-            Collections.addAll(not, excluded);
-            return this;
-        }
-        
-        public boolean matches(String name)
-        {
-            return (all.isEmpty() || all.stream().allMatch(name::contains))
-                && (any.isEmpty() || any.stream().anyMatch(name::contains))
-                && (not.isEmpty() || not.stream().noneMatch(name::contains));
-        }
-    }
+    public static final MatchRules ALL = matching().any();
     
     public static MatchRules matching()
     {
@@ -115,5 +81,76 @@ public class Aggregates
     public static <T> Set<T> set(Class<?> clazz, Class<? extends T> type, MatchRules rules)
     {
         return set(clazz, type, HashSet::new, rules);
+    }
+    
+    public static <T> Set<T> set(Class<?> clazz, Class<? extends T> type)
+    {
+        return set(clazz, type, ALL);
+    }
+    
+    public static <T> List<T> list(Class<?> clazz, Class<? extends T> type, Supplier<List<T>> constructor, MatchRules rules)
+    {
+        return Collections.unmodifiableList(collect(clazz, type, constructor, rules));
+    }
+    
+    public static <T> List<T> list(Class<?> clazz, Class<? extends T> type, MatchRules rules)
+    {
+        return list(clazz, type, ArrayList::new, rules);
+    }
+    
+    public static <T> List<T> list(Class<?> clazz, Class<? extends T> type)
+    {
+        return list(clazz, type, ALL);
+    }
+    
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface Result {}
+    
+    public static class MatchRules
+    {
+        private final Set<String> all;
+        private final Set<String> any;
+        private final Set<String> not;
+    
+        private MatchRules(Set<String> all, Set<String> any, Set<String> not)
+        {
+            this.all = Set.copyOf(all);
+            this.any = Set.copyOf(any);
+            this.not = Set.copyOf(not);
+        }
+        
+        private MatchRules()
+        {
+            this(Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
+        }
+        
+        public MatchRules all(String ... required)
+        {
+            Set<String> allModified = new HashSet<>(all);
+            Collections.addAll(allModified, required);
+            return new MatchRules(allModified, any, not);
+        }
+        
+        public MatchRules any(String ... optional)
+        {
+            Set<String> anyModified = new HashSet<>(any);
+            Collections.addAll(anyModified, optional);
+            return new MatchRules(all, anyModified, not);
+        }
+        
+        public MatchRules not(String ... excluded)
+        {
+            Set<String> notModified = new HashSet<>(not);
+            Collections.addAll(notModified, excluded);
+            return new MatchRules(all, any, notModified);
+        }
+        
+        public boolean matches(String name)
+        {
+            return (all.isEmpty() || all.stream().allMatch(name::contains))
+                && (any.isEmpty() || any.stream().anyMatch(name::contains))
+                && (not.isEmpty() || not.stream().noneMatch(name::contains));
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.rezzedup.discordsrv.staffchat;
 
 import com.rezzedup.discordsrv.staffchat.commands.ManageStaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.commands.StaffChatCommand;
+import com.rezzedup.discordsrv.staffchat.commands.ToggleStaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.events.DiscordStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.events.PlayerStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener;
@@ -30,6 +31,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.tlinkowski.annotation.basic.NullOr;
 
+import java.nio.file.Path;
 import java.util.Objects;
 
 import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
@@ -43,6 +45,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     
     public static final String DISCORDSRV = "DiscordSRV";
     
+    private @NullOr Path pluginDirectoryPath;
     private @NullOr Debugger debugger;
     private @NullOr ToggleData toggles;
     private @NullOr DiscordStaffChatListener discordSrvHook;
@@ -50,6 +53,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     @Override
     public void onEnable()
     {
+        this.pluginDirectoryPath = getDataFolder().toPath();
         this.debugger = new Debugger(this);
         this.toggles = new ToggleData(this);
         
@@ -64,6 +68,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         plugins.registerEvents(new PlayerStaffChatToggleListener(this), this);
         
         command("staffchat", new StaffChatCommand(this));
+        command("togglestaffchat", new ToggleStaffChatCommand(this));
         command("managestaffchat", new ManageStaffChatCommand(this));
         
         @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
@@ -157,6 +162,12 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     
     @Override
     public Plugin plugin() { return this; }
+    
+    public Path getPluginDirectoryPath()
+    {
+        if (pluginDirectoryPath != null) { return pluginDirectoryPath; }
+        throw new IllegalStateException("Plugin directory path isn't initialized (plugin unloaded?)");
+    }
     
     public Debugger debugger()
     {

@@ -55,17 +55,23 @@
             <version>2.10.6</version>
             <scope>provided</scope>
         </dependency>
-        <!-- bStats (via maven-central) -->
-        <dependency>
-            <groupId>org.bstats</groupId>
-            <artifactId>bstats-bukkit</artifactId>
-            <version>2.2.1</version>
-        </dependency>
         <!-- LeafCommunity Tasks (via jitpack.io) -->
         <dependency>
             <groupId>community.leaf.tasks</groupId>
             <artifactId>tasks-bukkit</artifactId>
             <version>46943e510a</version>
+        </dependency>
+        <!-- Java SemVer (via maven-central) -->
+        <dependency>
+            <groupId>com.github.zafarkhaja</groupId>
+            <artifactId>java-semver</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+        <!-- bStats (via maven-central) -->
+        <dependency>
+            <groupId>org.bstats</groupId>
+            <artifactId>bstats-bukkit</artifactId>
+            <version>2.2.1</version>
         </dependency>
         <!-- Nullness Annotations: @NullOr (via maven-central) -->
         <dependency>
@@ -98,6 +104,10 @@
                 <configuration>
                     <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
                     <relocations>
+                        <relocation>
+                            <pattern>com.github</pattern>
+                            <shadedPattern>${shade.relocation}.com.github</shadedPattern>
+                        </relocation>
                         <relocation>
                             <pattern>community.leaf</pattern>
                             <shadedPattern>${shade.relocation}.community.leaf</shadedPattern>
