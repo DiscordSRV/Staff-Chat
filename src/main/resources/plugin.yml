@@ -9,17 +9,25 @@ softdepend: [DiscordSRV, PlaceholderAPI]
 
 commands:
   staffchat:
+    aliases: [adminchat, schat, achat, sc, ac, a]
     description: Toggle or send a message to staff chat.
+    permission: staffchat.access
     usage: |-
       /<command> - toggle automatic staff chat
       /<command> <message> - send a message to the staff chat
+  togglestaffchat:
+    description: Enable/disable receiving staff chat messages.
     permission: staffchat.access
-    aliases: [adminchat, schat, achat, sc, ac, a]
+    usage: |-
+      /<command> auto - toggle automatic staff chat
+      /<command> on - receive staff chat messages
+      /<command> off - stop receiving staff chat messages
+      /<command> check [<player>] - check if someone can receive messages
   managestaffchat:
-    description: Manage and get information about DiscordSRV-Staff-Chat
-    usage: /<command>
-    permission: staffchat.manage
     aliases: [discordstaffchat, discordadminchat, manageadminchat]
+    description: Manage and get information about DiscordSRV-Staff-Chat
+    permission: staffchat.manage
+    usage: /<command>
 
 permissions:
   staffchat.*:
