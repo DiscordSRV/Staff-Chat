@@ -1,6 +1,7 @@
 package com.rezzedup.discordsrv.staffchat;
 
 import com.rezzedup.discordsrv.staffchat.util.CheckedConsumer;
+import com.rezzedup.discordsrv.staffchat.util.yaml.YamlValue;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import org.bukkit.entity.Player;
@@ -13,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class Debugger
@@ -101,7 +103,7 @@ public class Debugger
     {
         debug(clazz).recordDebugLogEntry(() ->
         {
-            @NullOr Plugin discordSrv = plugin.getServer().getPluginManager().getPlugin(StaffChatPlugin.DISCORDSRV);
+            @NullOr Plugin discordSrv = plugin.getServer().getPluginManager().getPlugin(Constants.DISCORDSRV);
             @NullOr Object channel = plugin.getDiscordChannelOrNull();
             
             boolean isDiscordSrvEnabled = discordSrv != null && discordSrv.isEnabled();
@@ -109,9 +111,9 @@ public class Debugger
             boolean isChannelReady = channel != null;
             
             return "[Status: " + context + "] " +
-                "Is DiscordSRV installed and enabled? " + isDiscordSrvEnabled + " :: " +
-                "Is DiscordSRV hooked? " + isDiscordSrvHooked + " :: " +
-                "Is " + StaffChatPlugin.CHANNEL + " channel ready? " + isChannelReady + " (" + channel + ")";
+                   "Is DiscordSRV installed and enabled? " + isDiscordSrvEnabled + " :: " +
+                   "Is DiscordSRV hooked? " + isDiscordSrvHooked + " :: " +
+                   "Is " + Constants.CHANNEL + " channel ready? " + isChannelReady + " (" + channel + ")";
         });
     }
     
@@ -147,20 +149,6 @@ public class Debugger
             recordDebugLogEntry(() -> source.asPrefixInBrackets(handleContext(context)) + " " + message.get());
         }
         
-        default void logMessageSubmissionFromInGame(Player author, String message)
-        {
-            log(ChatService.MINECRAFT, "Message", () ->
-                "from(" + author.getName() + ") message(\"" + message + "\")"
-            );
-        }
-        
-        default void logMessageSubmissionFromDiscord(User author, Message message)
-        {
-            log(ChatService.DISCORD, "Message", () ->
-                "from(" + author.getName() + "#" + author.getDiscriminator() + ") message(\"" + message.getContentStripped() + "\")"
-            );
-        }
-        
         default void header(Supplier<String> message)
         {
             recordDebugLogEntry(() -> "---------- " + message.get() + " ----------");
@@ -176,6 +164,52 @@ public class Debugger
         {
             log(context, () -> handleException(exception));
             throw exception;
+        }
+        
+        default void logMessageSubmissionFromInGame(Player author, String message)
+        {
+            log(ChatService.MINECRAFT, "Message", () ->
+                "from(" + author.getName() + ") message(\"" + message + "\")"
+            );
+        }
+        
+        default void logMessageSubmissionFromDiscord(User author, Message message)
+        {
+            log(ChatService.DISCORD, "Message", () ->
+                "from(" + author.getName() + "#" + author.getDiscriminator() + ") message(\"" + message.getContentStripped() + "\")"
+            );
+        }
+        
+        default void logConfigValues(Path filePath, List<YamlValue<?>> values)
+        {
+            recordDebugLogEntry(() ->
+            {
+                String name = filePath.getFileName().toString();
+                StringBuilder defaults = new StringBuilder();
+                
+                defaults.append("Total: ").append(values.size()).append(" => ");
+                
+                boolean isAppended = false;
+                
+                for (YamlValue<?> value : values)
+                {
+                    if (isAppended) { defaults.append(" :: "); }
+                    else { isAppended = true; }
+                    
+                    defaults.append("path(").append(value.path()).append(")");
+                    
+                    if (value instanceof YamlValue.Default<?>)
+                    {
+                        defaults.append(" default(").append(((YamlValue.Default<?>) value).getDefaultValue()).append(")");
+                    }
+                    else
+                    {
+                        defaults.append(" maybe()");
+                    }
+                }
+                
+                return "[" + name + "] " + defaults;
+            });
         }
     }
 }

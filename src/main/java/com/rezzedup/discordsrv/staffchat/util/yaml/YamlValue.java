@@ -125,6 +125,8 @@ public abstract class YamlValue<T>
             this.defaultValue = Objects.requireNonNull(defaultValue, "defaultValue");
         }
         
+        public T getDefaultValue() { return defaultValue; }
+        
         public T getOrDefault(ConfigurationSection yaml)
         {
             return get(yaml).orElse(defaultValue);

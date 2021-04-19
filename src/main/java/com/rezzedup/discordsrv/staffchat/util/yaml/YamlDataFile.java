@@ -16,11 +16,9 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class YamlDataFile implements UpdatableYamlDataSource
 {
@@ -128,11 +126,9 @@ public class YamlDataFile implements UpdatableYamlDataSource
                 String header = Files.readString(fs.getPath(parts[1]));
                 if (Strings.isEmptyOrNull(header)) { return; }
                 
-                if (!header.equals(data.options().header()))
-                {
-                    data.options().header(header);
-                    updated(true);
-                }
+                data.options().header(header);
+                // Though this may technically "update" the config, if only the header
+                // changes, that should not constitute rewriting the entire file.
             }
         }
         catch (IOException | URISyntaxException | RuntimeException e)
@@ -149,39 +145,26 @@ public class YamlDataFile implements UpdatableYamlDataSource
             
             for (String path : value.migrations())
             {
-                if (!existing.isSet(path)) { continue; }
-                set(value.path(), existing.get(path));
+                @NullOr Object existingValue = existing.get(path);
+                if (existingValue == null) { continue; }
+    
+                Optional<?> newValue = get(value);
+                if (newValue.isEmpty() || !existingValue.equals(newValue.get()))
+                {
+                    set(value.path(), existingValue);
+                }
             }
         }
     }
     
     protected void setupDefaults(List<YamlValue<?>> defaults)
     {
-        for (YamlValue<?> defined : defaults)
+        for (YamlValue<?> value : defaults)
         {
-            if (!(defined instanceof YamlValue.Default<?>)) { continue; }
-            
-            YamlValue.Default<?> value = (YamlValue.Default<?>) defined;
-            if (value.setAsDefaultIfUnset(data)) { updated(true); }
+            if (!(value instanceof YamlValue.Default<?>)) { continue; }
+            if (((YamlValue.Default<?>) value).setAsDefaultIfUnset(data)) { updated(true); }
         }
         
         migrateValues(defaults, data);
-    }
-    
-    protected void purgeValuesNotFoundIn(List<YamlValue<?>> values)
-    {
-        Set<String> validKeys = values.stream().map(YamlValue::path).collect(Collectors.toSet());
-        
-        for (String key : data.getKeys(true))
-        {
-            if (validKeys.contains(key)) { continue; }
-            set(key, null); // remove value at this key
-        }
-    }
-    
-    protected void setupDefaultsByPurgingUndefined(List<YamlValue<?>> defaults)
-    {
-        setupDefaults(defaults);
-        purgeValuesNotFoundIn(defaults);
     }
 }

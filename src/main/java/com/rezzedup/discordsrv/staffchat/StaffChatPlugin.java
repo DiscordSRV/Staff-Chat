@@ -40,13 +40,6 @@ import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 
 public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, StaffChatAPI
 {
-    // https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056
-    public static final int BSTATS = 11056;
-    
-    public static final String CHANNEL = "staff-chat";
-    
-    public static final String DISCORDSRV = "DiscordSRV";
-    
     private @NullOr Debugger debugger;
     private @NullOr Version version;
     private @NullOr Path pluginDirectoryPath;
@@ -60,8 +53,10 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     {
         // First and foremost, setup debugging
         this.debugger = new Debugger(this);
-        
         this.version = Version.valueOf(getDescription().getVersion());
+    
+        debug(getClass()).header(() -> "Starting Plugin: " + this);
+        debugger().schedulePluginStatus(getClass(), "Enable");
         
         // Setup files
         this.pluginDirectoryPath = getDataFolder().toPath();
@@ -69,11 +64,8 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         this.config = new StaffChatConfig(this);
         this.toggles = new ToggleData(this);
         
-        debug(getClass()).header(() -> "Starting Plugin: " + this);
-        debugger().schedulePluginStatus(getClass(), "Enable");
-        
         saveDefaultConfig();
-    
+        
         PluginManager plugins = getServer().getPluginManager();
         
         plugins.registerEvents(new PlayerPrefixedMessageListener(this), this);
@@ -83,7 +75,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         command("togglestaffchat", new ToggleStaffChatCommand(this));
         command("managestaffchat", new ManageStaffChatCommand(this));
         
-        @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
+        @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(Constants.DISCORDSRV);
         
         if (discordSrv != null)
         {
@@ -153,7 +145,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     {
         debug(getClass()).log("Subscribe", () -> "Subscribing to DiscordSRV: " + plugin);
         
-        if (!DISCORDSRV.equals(plugin.getName()) || !(plugin instanceof DiscordSRV))
+        if (!Constants.DISCORDSRV.equals(plugin.getName()) || !(plugin instanceof DiscordSRV))
         {
             throw debug(getClass()).failure("Subscribe", new IllegalArgumentException("Not DiscordSRV: " + plugin));
         }
@@ -174,7 +166,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     public @NullOr TextChannel getDiscordChannelOrNull()
     {
         return (isDiscordSrvHookEnabled())
-            ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL)
+            ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(Constants.CHANNEL)
             : null;
     }
     
@@ -234,18 +226,18 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         if (getDiscordChannelOrNull() != null)
         {
             debug(getClass()).log(ChatService.MINECRAFT, "Message", () ->
-                "Sending message to discord channel: " + CHANNEL + " => " + getDiscordChannelOrNull()
+            "Sending message to discord channel: " + Constants.CHANNEL + " => " + getDiscordChannelOrNull()
             );
             
             // Send to discord off the main thread (just like DiscordSRV does)
             getServer().getScheduler().runTaskAsynchronously(this, () -> 
-                DiscordSRV.getPlugin().processChatMessage(author, message, CHANNEL, false)
+                DiscordSRV.getPlugin().processChatMessage(author, message, Constants.CHANNEL, false)
             );
         }
         else
         {
             debug(getClass()).log(ChatService.MINECRAFT, "Message", () ->
-                "Unable to send message to discord: " + CHANNEL + " => null"
+            "Unable to send message to discord: " + Constants.CHANNEL + " => null"
             );
         }
     }
@@ -298,7 +290,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         if (command == null)
         {
             debug(getClass()).log("Command: Setup", () ->
-            "Unable to register command /" + name + " because it is not defined in plugin.yml"
+                "Unable to register command /" + name + " because it is not defined in plugin.yml"
             );
             return;
         }
@@ -326,7 +318,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         // Start a minute later to get the most accurate data.
         sync().delay(1).minutes().run(() ->
         {
-            Metrics metrics = new Metrics(this, BSTATS);
+            Metrics metrics = new Metrics(this, Constants.BSTATS);
         
             metrics.addCustomChart(new SimplePie(
                 "hooked_into_discordsrv", () -> String.valueOf(isDiscordSrvHookEnabled())
