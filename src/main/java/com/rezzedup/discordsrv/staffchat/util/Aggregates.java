@@ -1,5 +1,6 @@
 package com.rezzedup.discordsrv.staffchat.util;
 
+import com.google.gson.reflect.TypeToken;
 import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.lang.annotation.ElementType;
@@ -30,12 +31,12 @@ public class Aggregates
     }
     
     @SuppressWarnings("unchecked")
-    private static <T> Optional<T> cast(Class<? extends T> type, Object object)
+    private static <T> Optional<T> cast(TypeToken<? extends T> type, Object object)
     {
-        return (type.isAssignableFrom(object.getClass())) ? Optional.of((T) object) : Optional.empty();
+        return (type.getRawType().isAssignableFrom(object.getClass())) ? Optional.of((T) object) : Optional.empty();
     }
     
-    private static <T, C extends Collection<T>> C collect(Class<?> clazz, Class<? extends T> type, Supplier<C> constructor, MatchRules rules)
+    private static <T, C extends Collection<T>> C collect(Class<?> clazz, TypeToken<? extends T> type, Supplier<C> constructor, MatchRules rules)
     {
         Objects.requireNonNull(clazz, "clazz");
         Objects.requireNonNull(constructor, "constructor");
@@ -73,32 +74,32 @@ public class Aggregates
         return collection;
     }
     
-    public static <T> Set<T> set(Class<?> clazz, Class<? extends T> type, Supplier<Set<T>> constructor, MatchRules rules)
+    public static <T> Set<T> set(Class<?> clazz, TypeToken<? extends T> type, Supplier<Set<T>> constructor, MatchRules rules)
     {
         return Collections.unmodifiableSet(collect(clazz, type, constructor, rules));
     }
     
-    public static <T> Set<T> set(Class<?> clazz, Class<? extends T> type, MatchRules rules)
+    public static <T> Set<T> set(Class<?> clazz, TypeToken<? extends T> type, MatchRules rules)
     {
         return set(clazz, type, HashSet::new, rules);
     }
     
-    public static <T> Set<T> set(Class<?> clazz, Class<? extends T> type)
+    public static <T> Set<T> set(Class<?> clazz, TypeToken<? extends T> type)
     {
         return set(clazz, type, ALL);
     }
     
-    public static <T> List<T> list(Class<?> clazz, Class<? extends T> type, Supplier<List<T>> constructor, MatchRules rules)
+    public static <T> List<T> list(Class<?> clazz, TypeToken<? extends T> type, Supplier<List<T>> constructor, MatchRules rules)
     {
         return Collections.unmodifiableList(collect(clazz, type, constructor, rules));
     }
     
-    public static <T> List<T> list(Class<?> clazz, Class<? extends T> type, MatchRules rules)
+    public static <T> List<T> list(Class<?> clazz, TypeToken<? extends T> type, MatchRules rules)
     {
         return list(clazz, type, ArrayList::new, rules);
     }
     
-    public static <T> List<T> list(Class<?> clazz, Class<? extends T> type)
+    public static <T> List<T> list(Class<?> clazz, TypeToken<? extends T> type)
     {
         return list(clazz, type, ALL);
     }

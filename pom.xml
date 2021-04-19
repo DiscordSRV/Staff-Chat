@@ -62,6 +62,7 @@
             <version>46943e510a</version>
         </dependency>
         <!-- Java SemVer (via maven-central) -->
+        <!-- https://github.com/zafarkhaja/jsemver -->
         <dependency>
             <groupId>com.github.zafarkhaja</groupId>
             <artifactId>java-semver</artifactId>

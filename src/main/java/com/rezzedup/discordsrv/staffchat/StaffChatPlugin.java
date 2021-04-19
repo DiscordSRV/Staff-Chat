@@ -1,8 +1,10 @@
 package com.rezzedup.discordsrv.staffchat;
 
+import com.github.zafarkhaja.semver.Version;
 import com.rezzedup.discordsrv.staffchat.commands.ManageStaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.commands.StaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.commands.ToggleStaffChatCommand;
+import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.events.DiscordStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.events.PlayerStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener;
@@ -45,16 +47,26 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
     
     public static final String DISCORDSRV = "DiscordSRV";
     
-    private @NullOr Path pluginDirectoryPath;
     private @NullOr Debugger debugger;
+    private @NullOr Version version;
+    private @NullOr Path pluginDirectoryPath;
+    private @NullOr Path backupsDirectoryPath;
+    private @NullOr StaffChatConfig config;
     private @NullOr ToggleData toggles;
     private @NullOr DiscordStaffChatListener discordSrvHook;
     
     @Override
     public void onEnable()
     {
-        this.pluginDirectoryPath = getDataFolder().toPath();
+        // First and foremost, setup debugging
         this.debugger = new Debugger(this);
+        
+        this.version = Version.valueOf(getDescription().getVersion());
+        
+        // Setup files
+        this.pluginDirectoryPath = getDataFolder().toPath();
+        this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
+        this.config = new StaffChatConfig(this);
         this.toggles = new ToggleData(this);
         
         debug(getClass()).header(() -> "Starting Plugin: " + this);
@@ -111,77 +123,28 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         debug(getClass()).header(() -> "Disabled Plugin: " + this);
     }
     
-    private void startMetrics()
+    private <T> T initialized(@NullOr T thing, String name)
     {
-        if (!getConfig().getBoolean("metrics", true))
-        {
-            debug(getClass()).log("Metrics", () -> "Aborting: metrics are disabled in the config");
-            return;
-        }
-        
-        debug(getClass()).log("Metrics", () -> "Scheduling metrics to start one minute from now");
-        
-        // Start a minute later to get the most accurate data.
-        sync().delay(1).minutes().run(() ->
-        {
-            Metrics metrics = new Metrics(this, BSTATS);
-        
-            metrics.addCustomChart(new SimplePie(
-                "hooked_into_discordsrv", () -> String.valueOf(isDiscordSrvHookEnabled())
-            ));
-            
-            metrics.addCustomChart(new SimplePie(
-                "has_valid_staff-chat_channel", () -> String.valueOf(getDiscordChannelOrNull() != null)
-            ));
-            
-            debug(getClass()).log("Metrics", () -> "Started bStats metrics");
-        });
-    }
-    
-    private void command(String name, CommandExecutor executor)
-    {
-        @NullOr PluginCommand command = getCommand(name);
-        
-        if (command == null)
-        {
-            debug(getClass()).log("Command: Setup", () ->
-                "Unable to register command /" + name + " because it is not defined in plugin.yml"
-            );
-            return;
-        }
-        
-        command.setExecutor(executor);
-        debug(getClass()).log("Command: Setup", () -> "Registered command executor for: /" + name);
-        
-        if (executor instanceof TabCompleter)
-        {
-            command.setTabCompleter((TabCompleter) executor);
-            debug(getClass()).log("Command: Setup", () -> "Registered tab completer for: /" + name);
-        }
+        if (thing != null) { return thing; }
+        throw new IllegalStateException(name + " isn't initialized (plugin unloaded?)");
     }
     
     @Override
     public Plugin plugin() { return this; }
     
-    public Path getPluginDirectoryPath()
-    {
-        if (pluginDirectoryPath != null) { return pluginDirectoryPath; }
-        throw new IllegalStateException("Plugin directory path isn't initialized (plugin unloaded?)");
-    }
-    
-    public Debugger debugger()
-    {
-        if (debugger != null) { return debugger; }
-        throw new IllegalStateException("Debugger isn't initialized (plugin unloaded?)");
-    }
+    public Debugger debugger() { return initialized(debugger, "debugger"); }
     
     public Debugger.DebugLogger debug(Class<?> clazz) { return debugger().debug(clazz); }
     
-    public ToggleData toggles()
-    {
-        if (toggles != null) { return toggles; }
-        throw new IllegalStateException("Toggles aren't initialized (plugin unloaded?)");
-    }
+    public Version version() { return initialized(version, "version"); }
+    
+    public Path directory() { return initialized(pluginDirectoryPath, "pluginDirectoryPath"); }
+    
+    public Path backups() { return initialized(backupsDirectoryPath, "backupsDirectoryPath"); }
+    
+    public StaffChatConfig config() { return initialized(config, "config"); }
+    
+    public ToggleData toggles() { return initialized(toggles, "toggles"); }
     
     @Override
     public boolean isDiscordSrvHookEnabled() { return discordSrvHook != null; }
@@ -326,5 +289,54 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         });
         
         updatePlaceholdersThenAnnounceInGame(format, placeholders);
+    }
+    
+    private void command(String name, CommandExecutor executor)
+    {
+        @NullOr PluginCommand command = getCommand(name);
+        
+        if (command == null)
+        {
+            debug(getClass()).log("Command: Setup", () ->
+            "Unable to register command /" + name + " because it is not defined in plugin.yml"
+            );
+            return;
+        }
+        
+        command.setExecutor(executor);
+        debug(getClass()).log("Command: Setup", () -> "Registered command executor for: /" + name);
+        
+        if (executor instanceof TabCompleter)
+        {
+            command.setTabCompleter((TabCompleter) executor);
+            debug(getClass()).log("Command: Setup", () -> "Registered tab completer for: /" + name);
+        }
+    }
+    
+    private void startMetrics()
+    {
+        if (!config().getOrDefault(StaffChatConfig.ENABLE_METRICS))
+        {
+            debug(getClass()).log("Metrics", () -> "Aborting: metrics are disabled in the config");
+            return;
+        }
+        
+        debug(getClass()).log("Metrics", () -> "Scheduling metrics to start one minute from now");
+        
+        // Start a minute later to get the most accurate data.
+        sync().delay(1).minutes().run(() ->
+        {
+            Metrics metrics = new Metrics(this, BSTATS);
+        
+            metrics.addCustomChart(new SimplePie(
+                "hooked_into_discordsrv", () -> String.valueOf(isDiscordSrvHookEnabled())
+            ));
+            
+            metrics.addCustomChart(new SimplePie(
+                "has_valid_staff-chat_channel", () -> String.valueOf(getDiscordChannelOrNull() != null)
+            ));
+            
+            debug(getClass()).log("Metrics", () -> "Started bStats metrics");
+        });
     }
 }
