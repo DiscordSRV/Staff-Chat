@@ -1,7 +1,8 @@
 package com.rezzedup.discordsrv.staffchat;
 
 import com.rezzedup.discordsrv.staffchat.util.CheckedConsumer;
-import com.rezzedup.discordsrv.staffchat.util.yaml.YamlValue;
+import community.leaf.configvalues.bukkit.DefaultYamlValue;
+import community.leaf.configvalues.bukkit.YamlValue;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import org.bukkit.entity.Player;
@@ -196,11 +197,11 @@ public class Debugger
                     if (isAppended) { defaults.append(" :: "); }
                     else { isAppended = true; }
                     
-                    defaults.append("path(").append(value.path()).append(")");
+                    defaults.append("path(").append(value.key()).append(")");
                     
-                    if (value instanceof YamlValue.Default<?>)
+                    if (value instanceof DefaultYamlValue<?>)
                     {
-                        defaults.append(" default(").append(((YamlValue.Default<?>) value).getDefaultValue()).append(")");
+                        defaults.append(" default(").append(((DefaultYamlValue<?>) value).getDefaultValue()).append(")");
                     }
                     else
                     {

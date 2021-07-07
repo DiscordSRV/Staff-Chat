@@ -1,8 +1,9 @@
 package com.rezzedup.discordsrv.staffchat.commands;
 
-import com.google.gson.reflect.TypeToken;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
-import com.rezzedup.discordsrv.staffchat.util.Aggregates;
+import com.rezzedup.util.constants.Aggregates;
+import com.rezzedup.util.constants.annotations.AggregatedResult;
+import com.rezzedup.util.constants.types.TypeCapture;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -26,9 +27,13 @@ public class ToggleStaffChatCommand implements CommandExecutor, TabCompleter
     private static final Set<String> CHECK_ALIASES = Set.of("check");
     private static final Set<String> HELP_ALIASES = Set.of("help", "usage", "?");
     
-    @Aggregates.Result
+    @AggregatedResult
     private static final Set<String> ALL_OPTION_ALIASES =
-        Aggregates.set(ToggleStaffChatCommand.class, TypeToken.get(String.class), Aggregates.matching().all("ALIASES"));
+        Aggregates.set(
+            ToggleStaffChatCommand.class,
+            TypeCapture.type(String.class),
+            Aggregates.matching().all("ALIAS").collections(true)
+        );
     
     private final StaffChatPlugin plugin;
     

@@ -11,9 +11,9 @@ import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordStaffChatListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerPrefixedMessageListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener;
-import com.rezzedup.discordsrv.staffchat.util.Events;
 import com.rezzedup.discordsrv.staffchat.util.MappedPlaceholder;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
+import community.leaf.eventful.bukkit.EventSource;
 import community.leaf.tasks.bukkit.BukkitTaskSource;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.emoji.EmojiParser;
@@ -38,7 +38,7 @@ import java.util.Objects;
 
 import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 
-public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, StaffChatAPI
+public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, EventSource, StaffChatAPI
 {
     private @NullOr Debugger debugger;
     private @NullOr Version version;
@@ -197,7 +197,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         debug(getClass()).logMessageSubmissionFromInGame(author, message);
         
         PlayerStaffChatMessageEvent event =
-            Events.call(new PlayerStaffChatMessageEvent(author, message));
+            events().call(new PlayerStaffChatMessageEvent(author, message));
         
         if (event.isCancelled() || event.getText().isEmpty())
         {
@@ -251,7 +251,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Sta
         debug(getClass()).logMessageSubmissionFromDiscord(author, message);
         
         DiscordStaffChatMessageEvent event =
-            Events.call(new DiscordStaffChatMessageEvent(author, message, message.getContentStripped()));
+            events().call(new DiscordStaffChatMessageEvent(author, message, message.getContentStripped()));
         
         if (event.isCancelled() || event.getText().isEmpty())
         {

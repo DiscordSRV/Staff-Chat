@@ -24,10 +24,6 @@
             <url>https://nexus.scarsz.me/content/repositories/public/</url>
         </repository>
         <repository>
-            <id>extendedclip-repo</id>
-            <url>http://repo.extendedclip.com/content/repositories/placeholderapi/</url>
-        </repository>
-        <repository>
 		    <id>jitpack.io</id>
 		    <url>https://jitpack.io</url>
 		</repository>
@@ -38,28 +34,40 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.16.5-R0.1-SNAPSHOT</version>
+            <version>1.17.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <!-- DiscordSRV (via scarsz-nexus) -->
         <dependency>
             <groupId>com.discordsrv</groupId>
             <artifactId>discordsrv</artifactId>
-            <version>1.22.0</version>
+            <version>1.23.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- PlaceholderAPI (via extendedclip-repo) -->
+        <!-- PlaceholderAPI (via jitpack.io) -->
         <dependency>
-            <groupId>me.clip</groupId>
+            <groupId>com.github.placeholderapi</groupId>
             <artifactId>placeholderapi</artifactId>
-            <version>2.10.6</version>
+            <version>2.10.9</version>
             <scope>provided</scope>
+        </dependency>
+        <!-- LeafCommunity ConfigValues (via jitpack.io) -->
+        <dependency>
+            <groupId>community.leaf.configvalues</groupId>
+            <artifactId>config-values-bukkit</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+        <!-- LeafCommunity Eventful (via jitpack.io) -->
+        <dependency>
+            <groupId>community.leaf.eventful</groupId>
+            <artifactId>events-bukkit</artifactId>
+            <version>0.1.0</version>
         </dependency>
         <!-- LeafCommunity Tasks (via jitpack.io) -->
         <dependency>
             <groupId>community.leaf.tasks</groupId>
             <artifactId>tasks-bukkit</artifactId>
-            <version>46943e510a</version>
+            <version>0.0.1</version>
         </dependency>
         <!-- Java SemVer (via maven-central) -->
         <!-- https://github.com/zafarkhaja/jsemver -->
@@ -112,6 +120,10 @@
                         <relocation>
                             <pattern>community.leaf</pattern>
                             <shadedPattern>${shade.relocation}.community.leaf</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.rezzedup.util</pattern>
+                            <shadedPattern>${shade.relocation}.com.rezzedup.util</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.bstats</pattern>
