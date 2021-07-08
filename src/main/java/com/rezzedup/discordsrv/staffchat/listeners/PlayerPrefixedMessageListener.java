@@ -2,6 +2,7 @@ package com.rezzedup.discordsrv.staffchat.listeners;
 
 import com.rezzedup.discordsrv.staffchat.Permissions;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
+import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,12 +20,12 @@ public class PlayerPrefixedMessageListener implements Listener
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onPrefixedChat(AsyncPlayerChatEvent event)
     {
-        if (!plugin.getConfig().getBoolean("enable-prefixed-chat-messages", false)) { return; }
+        if (!plugin.config().getOrDefault(StaffChatConfig.PREFIXED_CHAT_ENABLED)) { return; }
         
         Player player = event.getPlayer();
         if (Permissions.ACCESS.denies(player)) { return; }
         
-        String identifier = Strings.orEmpty(plugin.getConfig(), "prefixed-chat-identifier");
+        String identifier = plugin.config().getOrDefault(StaffChatConfig.PREFIXED_CHAT_IDENTIFIER);
         if (Strings.isEmptyOrNull(identifier))
         {
             plugin.debug(getClass()).log(event, () -> "Prefixed chat is enabled but identifier is undefined");

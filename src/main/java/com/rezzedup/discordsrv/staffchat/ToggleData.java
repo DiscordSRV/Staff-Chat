@@ -1,5 +1,6 @@
 package com.rezzedup.discordsrv.staffchat;
 
+import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
 import org.bukkit.entity.Player;
 
@@ -27,7 +28,7 @@ public class ToggleData
         if (state)
         {
             autoChatToggles.add(uuid);
-            player.sendMessage(Strings.colorful(plugin.getConfig().getString("enable-staff-chat")));
+            player.sendMessage(Strings.colorful(plugin.messages().getOrDefault(MessagesConfig.AUTO_ENABLED_NOTIFICATION)));
             
             plugin.debug(getClass()).log("Toggle", () ->
                 "Enabled automatic staff-chat for player: " + player.getName()
@@ -36,7 +37,7 @@ public class ToggleData
         else
         {
             autoChatToggles.remove(uuid);
-            player.sendMessage(Strings.colorful(plugin.getConfig().getString("disable-staff-chat")));
+            player.sendMessage(Strings.colorful(plugin.messages().getOrDefault(MessagesConfig.AUTO_DISABLED_NOTIFICATION)));
             
             plugin.debug(getClass()).log("Toggle", () ->
                 "Disabled automatic staff-chat for player: " + player.getName()

@@ -299,6 +299,10 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         Path configPath = directory().resolve("config.yml");
         if (!Files.isRegularFile(configPath)) { return; }
         
+        debug(getClass()).log("Upgrade Legacy Config", () ->
+            "Found legacy config, upgrading it to new configs..."
+        );
+        
         config().migrateValues(StaffChatConfig.VALUES, getConfig());
         config().save();
         
@@ -310,7 +314,13 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
             FileIO.backup(configPath, backups().resolve("config.legacy.yml"));
             Files.deleteIfExists(configPath);
         }
-        catch (Exception e) { e.printStackTrace(); }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            debug(getClass()).log("Upgrade Legacy Config", () ->
+                "Failed to backup legacy config: " + e.getMessage()
+            );
+        }
     }
     
     private void command(String name, CommandExecutor executor)
@@ -337,7 +347,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     
     private void startMetrics()
     {
-        if (!config().getOrDefault(StaffChatConfig.ENABLE_METRICS))
+        if (!config().getOrDefault(StaffChatConfig.METRICS_ENABLED))
         {
             debug(getClass()).log("Metrics", () -> "Aborting: metrics are disabled in the config");
             return;

@@ -3,6 +3,8 @@ package com.rezzedup.discordsrv.staffchat.listeners;
 import com.rezzedup.discordsrv.staffchat.ToggleData;
 import com.rezzedup.discordsrv.staffchat.Permissions;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
+import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
+import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -57,7 +59,7 @@ public class PlayerStaffChatToggleListener implements Listener
         Player player = event.getPlayer();
         
         boolean isNotifiable =
-            plugin.getConfig().getBoolean("notify-staff-chat-enabled-on-join")
+            plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_TOGGLE_ENABLED)
                 && Permissions.ACCESS.allows(player)
                 && toggles.isChatAutomatic(player);
         
@@ -69,7 +71,9 @@ public class PlayerStaffChatToggleListener implements Listener
         );
         
         plugin.sync().delay(10).ticks().run(() ->
-            player.sendMessage(Strings.colorful(plugin.getConfig(), "staff-chat-enabled-notification"))
+            player.sendMessage(Strings.colorful(
+                plugin.messages().getOrDefault(MessagesConfig.AUTO_ENABLED_NOTIFICATION)
+            ))
         );
     }
 }

@@ -16,27 +16,29 @@ public class StaffChatConfig extends YamlDataFile
     public static final YamlValue<String> VERSION =
         YamlValue.ofString("meta.config-version").maybe();
     
-    public static final DefaultYamlValue<Boolean> ENABLE_METRICS =
+    public static final DefaultYamlValue<Boolean> METRICS_ENABLED =
         YamlValue.ofBoolean("plugin.metrics")
             .migrates(Migration.move("metrics"))
             .defaults(true);
     
-    public static final DefaultYamlValue<Boolean> ENABLE_UPDATE_CHECKER =
+    public static final DefaultYamlValue<Boolean> UPDATE_CHECKER_ENABLED =
         YamlValue.ofBoolean("plugin.updates.check-for-updates").defaults(true);
     
-    public static final DefaultYamlValue<Boolean> UPDATE_CHECKER_NOTIFICATIONS =
+    public static final DefaultYamlValue<Boolean> NOTIFY_IF_UPDATE_AVAILABLE =
         YamlValue.ofBoolean("plugin.updates.notify-operators").defaults(true);
     
-    public static final DefaultYamlValue<Boolean> PERSIST_TOGGLES =
+    public static final DefaultYamlValue<Boolean> TOGGLE_STATE_PERSISTS =
         YamlValue.ofBoolean("staffchat.toggles.chat-toggles-persist-after-restart").defaults(true);
     
-    public static final DefaultYamlValue<Boolean> ENABLE_LEAVING_STAFFCHAT =
+    public static final DefaultYamlValue<Boolean> LEAVING_STAFFCHAT_ENABLED =
         YamlValue.ofBoolean("staffchat.toggles.let-staff-members-turn-off-staffchat").defaults(true);
     
-    public static final DefaultYamlValue<Boolean> TOGGLE_NOTIFICATIONS =
-        YamlValue.ofBoolean("staffchat.toggles.notify-toggle-status-on-join").defaults(true);
+    public static final DefaultYamlValue<Boolean> NOTIFY_IF_TOGGLE_ENABLED =
+        YamlValue.ofBoolean("staffchat.toggles.notify-toggle-status-on-join")
+            .migrates(Migration.move("notify-staff-chat-enabled-on-join"))
+            .defaults(true);
     
-    public static final DefaultYamlValue<Boolean> ENABLE_PREFIXED_CHAT =
+    public static final DefaultYamlValue<Boolean> PREFIXED_CHAT_ENABLED =
         YamlValue.ofBoolean("staffchat.prefixed.enable-prefixed-chat-messages")
             .migrates(Migration.move("enable-prefixed-chat-messages"))
             .defaults(false);
