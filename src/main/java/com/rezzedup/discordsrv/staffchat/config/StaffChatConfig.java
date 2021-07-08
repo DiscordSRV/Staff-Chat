@@ -1,7 +1,6 @@
 package com.rezzedup.discordsrv.staffchat.config;
 
 import com.github.zafarkhaja.semver.Version;
-import com.rezzedup.discordsrv.staffchat.Constants;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
 import com.rezzedup.util.constants.Aggregates;
 import com.rezzedup.util.constants.annotations.AggregatedResult;
@@ -19,7 +18,7 @@ public class StaffChatConfig extends YamlDataFile
     
     public static final DefaultYamlValue<Boolean> ENABLE_METRICS =
         YamlValue.ofBoolean("plugin.metrics")
-            .migrates(Migration.copy("metrics"))
+            .migrates(Migration.move("metrics"))
             .defaults(true);
     
     public static final DefaultYamlValue<Boolean> ENABLE_UPDATE_CHECKER =
@@ -39,23 +38,20 @@ public class StaffChatConfig extends YamlDataFile
     
     public static final DefaultYamlValue<Boolean> ENABLE_PREFIXED_CHAT =
         YamlValue.ofBoolean("staffchat.prefixed.enable-prefixed-chat-messages")
-            .migrates(Migration.copy("enable-prefixed-chat-messages"))
+            .migrates(Migration.move("enable-prefixed-chat-messages"))
             .defaults(false);
     
     public static final DefaultYamlValue<String> PREFIXED_CHAT_IDENTIFIER =
         YamlValue.ofString("staffchat.prefixed.prefixed-chat-identifier")
-            .migrates(Migration.copy("prefixed-chat-identifier"))
+            .migrates(Migration.move("prefixed-chat-identifier"))
             .defaults("@");
     
     @AggregatedResult
     public static final List<YamlValue<?>> VALUES = Aggregates.list(StaffChatConfig.class, YamlValue.type());
     
-    private final StaffChatPlugin plugin;
-    
     public StaffChatConfig(StaffChatPlugin plugin)
     {
         super(plugin.directory(), "staffchat.config.yml");
-        this.plugin = plugin;
         plugin.debug(getClass()).logConfigValues(getFilePath(), VALUES);
         
         reloadsWith(() ->
@@ -66,7 +62,7 @@ public class StaffChatConfig extends YamlDataFile
                 return;
             }
             
-            Version existing = Version.valueOf(get(VERSION).orElse(Constants.NO_VERSION));
+            Version existing = Version.valueOf(get(VERSION).orElse(Configs.NO_VERSION));
             boolean isOutdated = existing.lessThan(plugin.version());
             
             if (isOutdated)

@@ -1,6 +1,5 @@
 package com.rezzedup.discordsrv.staffchat;
 
-import com.rezzedup.discordsrv.staffchat.util.CheckedConsumer;
 import community.leaf.configvalues.bukkit.DefaultYamlValue;
 import community.leaf.configvalues.bukkit.YamlValue;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
@@ -41,12 +40,6 @@ public class Debugger
     
     private boolean isToggleFilePresent() { return Files.isRegularFile(debugToggleFile); }
     
-    private void updateToggleFile(CheckedConsumer<Path, IOException> update)
-    {
-        try { update.accept(debugToggleFile); }
-        catch (IOException e) { e.printStackTrace(); }
-    }
-    
     public boolean isEnabled() { return isEnabled; }
     
     public void setEnabled(boolean enabled)
@@ -55,16 +48,20 @@ public class Debugger
         
         this.isEnabled = enabled;
         
-        if (enabled)
+        try
         {
-            printThenWriteToLogFile("========== Starting Debugger ==========");
-            if (!isToggleFilePresent()) { updateToggleFile(Files::createFile); }
+            if (enabled)
+            {
+                printThenWriteToLogFile("========== Starting Debugger ==========");
+                if (!isToggleFilePresent()) { Files.createFile(debugToggleFile); }
+            }
+            else
+            {
+                printThenWriteToLogFile("========== Disabled Debugger ==========");
+                Files.deleteIfExists(debugToggleFile);
+            }
         }
-        else
-        {
-            printThenWriteToLogFile("========== Disabled Debugger ==========");
-            updateToggleFile(Files::deleteIfExists);
-        }
+        catch (IOException e) { e.printStackTrace(); }
     }
     
     public DebugLogger debug(Class<?> clazz)
@@ -104,7 +101,7 @@ public class Debugger
     {
         debug(clazz).recordDebugLogEntry(() ->
         {
-            @NullOr Plugin discordSrv = plugin.getServer().getPluginManager().getPlugin(Constants.DISCORDSRV);
+            @NullOr Plugin discordSrv = plugin.getServer().getPluginManager().getPlugin(StaffChatPlugin.DISCORDSRV);
             @NullOr Object channel = plugin.getDiscordChannelOrNull();
             
             boolean isDiscordSrvEnabled = discordSrv != null && discordSrv.isEnabled();
@@ -114,7 +111,7 @@ public class Debugger
             return "[Status: " + context + "] " +
                    "Is DiscordSRV installed and enabled? " + isDiscordSrvEnabled + " :: " +
                    "Is DiscordSRV hooked? " + isDiscordSrvHooked + " :: " +
-                   "Is " + Constants.CHANNEL + " channel ready? " + isChannelReady + " (" + channel + ")";
+                   "Is " + StaffChatPlugin.CHANNEL + " channel ready? " + isChannelReady + " (" + channel + ")";
         });
     }
     

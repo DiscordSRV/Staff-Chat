@@ -4,6 +4,7 @@ import com.github.zafarkhaja.semver.Version;
 import com.rezzedup.discordsrv.staffchat.commands.ManageStaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.commands.StaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.commands.ToggleStaffChatCommand;
+import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.events.DiscordStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.events.PlayerStaffChatMessageEvent;
@@ -11,6 +12,7 @@ import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordStaffChatListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerPrefixedMessageListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener;
+import com.rezzedup.discordsrv.staffchat.util.FileIO;
 import com.rezzedup.discordsrv.staffchat.util.MappedPlaceholder;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
 import community.leaf.eventful.bukkit.EventSource;
@@ -29,10 +31,10 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.tlinkowski.annotation.basic.NullOr;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -40,11 +42,19 @@ import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 
 public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, EventSource, StaffChatAPI
 {
+    // https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056
+    public static final int BSTATS = 11056;
+    
+    public static final String CHANNEL = "staff-chat";
+    
+    public static final String DISCORDSRV = "DiscordSRV";
+    
     private @NullOr Debugger debugger;
     private @NullOr Version version;
     private @NullOr Path pluginDirectoryPath;
     private @NullOr Path backupsDirectoryPath;
     private @NullOr StaffChatConfig config;
+    private @NullOr MessagesConfig messages;
     private @NullOr ToggleData toggles;
     private @NullOr DiscordStaffChatListener discordSrvHook;
     
@@ -62,20 +72,19 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         this.pluginDirectoryPath = getDataFolder().toPath();
         this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
         this.config = new StaffChatConfig(this);
+        this.messages = new MessagesConfig(this);
         this.toggles = new ToggleData(this);
         
-        saveDefaultConfig();
+        upgradeLegacyConfig();
         
-        PluginManager plugins = getServer().getPluginManager();
-        
-        plugins.registerEvents(new PlayerPrefixedMessageListener(this), this);
-        plugins.registerEvents(new PlayerStaffChatToggleListener(this), this);
+        events().register(new PlayerPrefixedMessageListener(this));
+        events().register(new PlayerStaffChatToggleListener(this));
         
         command("staffchat", new StaffChatCommand(this));
         command("togglestaffchat", new ToggleStaffChatCommand(this));
         command("managestaffchat", new ManageStaffChatCommand(this));
         
-        @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(Constants.DISCORDSRV);
+        @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
         
         if (discordSrv != null)
         {
@@ -136,6 +145,8 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     
     public StaffChatConfig config() { return initialized(config, "config"); }
     
+    public MessagesConfig messages() { return initialized(messages, "messages"); }
+    
     public ToggleData toggles() { return initialized(toggles, "toggles"); }
     
     @Override
@@ -145,7 +156,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     {
         debug(getClass()).log("Subscribe", () -> "Subscribing to DiscordSRV: " + plugin);
         
-        if (!Constants.DISCORDSRV.equals(plugin.getName()) || !(plugin instanceof DiscordSRV))
+        if (!DISCORDSRV.equals(plugin.getName()) || !(plugin instanceof DiscordSRV))
         {
             throw debug(getClass()).failure("Subscribe", new IllegalArgumentException("Not DiscordSRV: " + plugin));
         }
@@ -166,7 +177,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     public @NullOr TextChannel getDiscordChannelOrNull()
     {
         return (isDiscordSrvHookEnabled())
-            ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(Constants.CHANNEL)
+            ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL)
             : null;
     }
     
@@ -206,7 +217,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         }
         
         String text = event.getText();
-        String format = Strings.orEmpty(getConfig(), "in-game-message-format");
+        String format = messages().getOrDefault(MessagesConfig.IN_GAME_MESSAGE_FORMAT);
         
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
         {
@@ -226,18 +237,18 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         if (getDiscordChannelOrNull() != null)
         {
             debug(getClass()).log(ChatService.MINECRAFT, "Message", () ->
-            "Sending message to discord channel: " + Constants.CHANNEL + " => " + getDiscordChannelOrNull()
+                "Sending message to discord channel: " + CHANNEL + " => " + getDiscordChannelOrNull()
             );
             
             // Send to discord off the main thread (just like DiscordSRV does)
             getServer().getScheduler().runTaskAsynchronously(this, () -> 
-                DiscordSRV.getPlugin().processChatMessage(author, message, Constants.CHANNEL, false)
+                DiscordSRV.getPlugin().processChatMessage(author, message, CHANNEL, false)
             );
         }
         else
         {
             debug(getClass()).log(ChatService.MINECRAFT, "Message", () ->
-            "Unable to send message to discord: " + Constants.CHANNEL + " => null"
+                "Unable to send message to discord: " + CHANNEL + " => null"
             );
         }
     }
@@ -261,7 +272,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     
         // Emoji Unicode -> Alias (library included with DiscordSRV)
         String text = EmojiParser.parseToAliases(event.getText());
-        String format = Strings.orEmpty(getConfig(), "discord-message-format");
+        String format = messages().getOrDefault(MessagesConfig.DISCORD_MESSAGE_FORMAT);
         
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
         {
@@ -281,6 +292,25 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         });
         
         updatePlaceholdersThenAnnounceInGame(format, placeholders);
+    }
+    
+    private void upgradeLegacyConfig()
+    {
+        Path configPath = directory().resolve("config.yml");
+        if (!Files.isRegularFile(configPath)) { return; }
+        
+        config().migrateValues(StaffChatConfig.VALUES, getConfig());
+        config().save();
+        
+        messages().migrateValues(MessagesConfig.VALUES, getConfig());
+        messages().save();
+        
+        try
+        {
+            FileIO.backup(configPath, backups().resolve("config.legacy.yml"));
+            Files.deleteIfExists(configPath);
+        }
+        catch (Exception e) { e.printStackTrace(); }
     }
     
     private void command(String name, CommandExecutor executor)
@@ -318,7 +348,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         // Start a minute later to get the most accurate data.
         sync().delay(1).minutes().run(() ->
         {
-            Metrics metrics = new Metrics(this, Constants.BSTATS);
+            Metrics metrics = new Metrics(this, BSTATS);
         
             metrics.addCustomChart(new SimplePie(
                 "hooked_into_discordsrv", () -> String.valueOf(isDiscordSrvHookEnabled())

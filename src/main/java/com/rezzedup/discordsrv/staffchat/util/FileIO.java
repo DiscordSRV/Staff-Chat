@@ -4,18 +4,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.function.Consumer;
 
 public class FileIO
 {
     private FileIO() { throw new UnsupportedOperationException(); }
     
-    public static void write(Path filePath, String contents, ExceptionHandler<? super IOException> exceptions)
+    public static void write(Path filePath, String contents, Consumer<? super IOException> exceptions)
     {
         try { Files.writeString(filePath, contents); }
-        catch (IOException e) { exceptions.handle(e); }
+        catch (IOException e) { exceptions.accept(e); }
     }
     
-    public static void backup(Path existingFilePath, Path backupFilePath, ExceptionHandler<? super IOException> exceptions)
+    public static void backup(Path existingFilePath, Path backupFilePath, Consumer<? super IOException> exceptions)
     {
         // Nothing to back up.
         if (!Files.isRegularFile(existingFilePath)) { return; }
@@ -41,6 +42,11 @@ public class FileIO
                 return;
             }
         }
-        catch (IOException e) { exceptions.handle(e); }
+        catch (IOException e) { exceptions.accept(e); }
+    }
+    
+    public static void backup(Path existingFilePath, Path backupFilePath)
+    {
+        backup(existingFilePath, backupFilePath, e -> { throw new RuntimeException(e); });
     }
 }
