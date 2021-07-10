@@ -26,6 +26,11 @@ public class Strings
         return orEmpty(config.getString(key));
     }
     
+    public static @NullOr String valueOfOrNull(@NullOr Object object)
+    {
+        return (object == null) ? null : String.valueOf(object);
+    }
+    
     public static String colorful(@NullOr String text)
     {
         return ChatColor.translateAlternateColorCodes('&', orEmpty(text));

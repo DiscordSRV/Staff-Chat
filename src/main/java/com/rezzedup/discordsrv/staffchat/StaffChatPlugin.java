@@ -55,7 +55,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     private @NullOr Path backupsDirectoryPath;
     private @NullOr StaffChatConfig config;
     private @NullOr MessagesConfig messages;
-    private @NullOr ToggleData toggles;
+    private @NullOr StaffChatData data;
     private @NullOr DiscordStaffChatListener discordSrvHook;
     
     @Override
@@ -73,7 +73,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
         this.config = new StaffChatConfig(this);
         this.messages = new MessagesConfig(this);
-        this.toggles = new ToggleData(this);
+        this.data = new StaffChatData(this);
         
         upgradeLegacyConfig();
         
@@ -111,7 +111,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         debug(getClass()).log("Disable", () -> "Disabling plugin...");
         
         // Display toggle message so that auto staff-chat users are aware that their chat is public again.
-        getServer().getOnlinePlayers().stream().filter(toggles()::isChatAutomatic).forEach(toggles()::toggleAutoChat);
+        getServer().getOnlinePlayers().stream().filter(data()::isChatAutomatic).forEach(data()::toggleAutoChat);
         
         if (isDiscordSrvHookEnabled())
         {
@@ -147,7 +147,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     
     public MessagesConfig messages() { return initialized(messages, "messages"); }
     
-    public ToggleData toggles() { return initialized(toggles, "toggles"); }
+    public StaffChatData data() { return initialized(data, "data"); }
     
     @Override
     public boolean isDiscordSrvHookEnabled() { return discordSrvHook != null; }

@@ -1,10 +1,11 @@
 package com.rezzedup.discordsrv.staffchat.listeners;
 
-import com.rezzedup.discordsrv.staffchat.ToggleData;
+import com.rezzedup.discordsrv.staffchat.StaffChatData;
 import com.rezzedup.discordsrv.staffchat.Permissions;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
 import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
+import com.rezzedup.discordsrv.staffchat.events.AutoStaffChatToggleEvent;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,17 +13,18 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import pl.tlinkowski.annotation.basic.NullOr;
 
 @SuppressWarnings("unused")
 public class PlayerStaffChatToggleListener implements Listener
 {
     private final StaffChatPlugin plugin;
-    private final ToggleData toggles;
+    private final StaffChatData toggles;
     
     public PlayerStaffChatToggleListener(StaffChatPlugin plugin)
     {
         this.plugin = plugin;
-        this.toggles = plugin.toggles();
+        this.toggles = plugin.data();
     }
     
     @EventHandler(priority = EventPriority.LOWEST)
@@ -75,5 +77,39 @@ public class PlayerStaffChatToggleListener implements Listener
                 plugin.messages().getOrDefault(MessagesConfig.AUTO_ENABLED_NOTIFICATION)
             ))
         );
+    }
+    
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onToggleAutoChat(AutoStaffChatToggleEvent event)
+    {
+        @NullOr Player player = event.getProfile().toPlayer().orElse(null);
+        String name = (player == null) ? "<Offline>" : player.getName();
+        
+        if (event.isEnablingAutomaticChat())
+        {
+            plugin.debug(getClass()).log(event, () ->
+                "Enabled automatic staff-chat for player: " + name + " (" + event.getProfile().uuid() + ")"
+            );
+            
+            if (player != null)
+            {
+                player.sendMessage(Strings.colorful(
+                    plugin.messages().getOrDefault(MessagesConfig.AUTO_ENABLED_NOTIFICATION)
+                ));
+            }
+        }
+        else
+        {
+            plugin.debug(getClass()).log(event, () ->
+                "Disabled automatic staff-chat for player: " + name + " (" + event.getProfile().uuid() + ")"
+            );
+            
+            if (player != null)
+            {
+                player.sendMessage(Strings.colorful(
+                    plugin.messages().getOrDefault(MessagesConfig.AUTO_DISABLED_NOTIFICATION)
+                ));
+            }
+        }
     }
 }

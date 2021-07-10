@@ -27,7 +27,7 @@ public class StaffChatConfig extends YamlDataFile
     public static final DefaultYamlValue<Boolean> NOTIFY_IF_UPDATE_AVAILABLE =
         YamlValue.ofBoolean("plugin.updates.notify-operators").defaults(true);
     
-    public static final DefaultYamlValue<Boolean> TOGGLE_STATE_PERSISTS =
+    public static final DefaultYamlValue<Boolean> PERSIST_TOGGLES =
         YamlValue.ofBoolean("staffchat.toggles.chat-toggles-persist-after-restart").defaults(true);
     
     public static final DefaultYamlValue<Boolean> LEAVING_STAFFCHAT_ENABLED =
