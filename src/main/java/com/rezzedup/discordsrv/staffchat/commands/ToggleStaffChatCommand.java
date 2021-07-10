@@ -22,8 +22,8 @@ import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 public class ToggleStaffChatCommand implements CommandExecutor, TabCompleter
 {
     private static final Set<String> TOGGLE_AUTO_ALIASES = Set.of("auto", "automatic");
-    private static final Set<String> TOGGLE_ON_ALIASES = Set.of("on", "enable", "enabled");
-    private static final Set<String> TOGGLE_OFF_ALIASES = Set.of("off", "disable", "disabled");
+    private static final Set<String> TOGGLE_ON_ALIASES = Set.of("on", "enable", "enabled", "join");
+    private static final Set<String> TOGGLE_OFF_ALIASES = Set.of("off", "disable", "disabled", "leave");
     private static final Set<String> CHECK_ALIASES = Set.of("check");
     private static final Set<String> HELP_ALIASES = Set.of("help", "usage", "?");
     
@@ -90,7 +90,7 @@ public class ToggleStaffChatCommand implements CommandExecutor, TabCompleter
     private @NullOr Player onlyIfPlayer(CommandSender sender)
     {
         if (sender instanceof Player) { return (Player) sender; }
-        sender.sendMessage("Only players may run this commands.");
+        sender.sendMessage("Only players may run this command.");
         return null;
     }
     
@@ -98,18 +98,25 @@ public class ToggleStaffChatCommand implements CommandExecutor, TabCompleter
     {
         @NullOr Player player = onlyIfPlayer(sender);
         if (player == null) { return; }
+        
+        plugin.data().getOrCreateProfile(player).toggleAutomaticStaffChat();
     }
     
     private void on(CommandSender sender)
     {
         @NullOr Player player = onlyIfPlayer(sender);
         if (player == null) { return; }
+        
+        // TODO:
+        plugin.data().getOrCreateProfile(player).receivesStaffChatMessages(true);
     }
     
     private void off(CommandSender sender)
     {
         @NullOr Player player = onlyIfPlayer(sender);
         if (player == null) { return; }
+        
+        plugin.data().getOrCreateProfile(player).receivesStaffChatMessages(false);
     }
     
     private void check(CommandSender sender, String[] args)

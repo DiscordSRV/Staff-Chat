@@ -1,6 +1,5 @@
 package com.rezzedup.discordsrv.staffchat.listeners;
 
-import com.rezzedup.discordsrv.staffchat.StaffChatData;
 import com.rezzedup.discordsrv.staffchat.Permissions;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
 import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
@@ -19,19 +18,17 @@ import pl.tlinkowski.annotation.basic.NullOr;
 public class PlayerStaffChatToggleListener implements Listener
 {
     private final StaffChatPlugin plugin;
-    private final StaffChatData toggles;
     
     public PlayerStaffChatToggleListener(StaffChatPlugin plugin)
     {
         this.plugin = plugin;
-        this.toggles = plugin.data();
     }
     
     @EventHandler(priority = EventPriority.LOWEST)
     public void onToggledChat(AsyncPlayerChatEvent event)
     {
         Player player = event.getPlayer();
-        if (!toggles.isChatAutomatic(player)) { return; }
+        if (!plugin.data().isChatAutomatic(player)) { return; }
         
         if (Permissions.ACCESS.allows(player))
         {
@@ -51,7 +48,8 @@ public class PlayerStaffChatToggleListener implements Listener
                 "but they don't have permission to use the staff chat"
             );
             
-            toggles.setAutoChatToggle(event.getPlayer(), false);
+            // Remove this non-staff profile.
+            plugin.data().updateProfile(player);
         }
     }
     
@@ -59,13 +57,11 @@ public class PlayerStaffChatToggleListener implements Listener
     public void onPlayerJoin(PlayerJoinEvent event)
     {
         Player player = event.getPlayer();
+        plugin.data().updateProfile(player);
         
-        boolean isNotifiable =
-            plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_TOGGLE_ENABLED)
-                && Permissions.ACCESS.allows(player)
-                && toggles.isChatAutomatic(player);
-        
-        if (!isNotifiable) { return; }
+        if (!plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_TOGGLE_ENABLED)) { return; }
+        if (!Permissions.ACCESS.allows(player)) { return; }
+        if (!plugin.data().isChatAutomatic(player)) { return; }
         
         plugin.debug(getClass()).log(event, () ->
             "Player " + event.getPlayer().getName() + " joined: " +

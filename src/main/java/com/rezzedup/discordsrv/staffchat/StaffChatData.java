@@ -1,45 +1,113 @@
 package com.rezzedup.discordsrv.staffchat;
 
 import com.rezzedup.discordsrv.staffchat.config.Configs;
-import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.events.AutoStaffChatToggleEvent;
 import com.rezzedup.discordsrv.staffchat.events.ReceivingStaffChatToggleEvent;
-import com.rezzedup.discordsrv.staffchat.util.Strings;
 import community.leaf.configvalues.bukkit.YamlValue;
 import community.leaf.configvalues.bukkit.data.YamlDataFile;
 import community.leaf.configvalues.bukkit.util.Sections;
+import community.leaf.tasks.TaskContext;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.time.Instant;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 public class StaffChatData
 {
-    private final Set<UUID> autoChatToggles = new HashSet<>();
-    private final Set<UUID> leftChatToggles = new HashSet<>();
+    private static final String PROFILES_PATH = "staff-chat.profiles";
+    
+    private final Map<UUID, Profile> profilesByUuid = new HashMap<>();
     
     private final StaffChatPlugin plugin;
     private final YamlDataFile yaml;
+    private final TaskContext<BukkitTask> task;
     
     public StaffChatData(StaffChatPlugin plugin)
     {
         this.plugin = plugin;
         this.yaml = new YamlDataFile(plugin.directory().resolve("data"), "staff-chat.data.yml");
+        
+        if (plugin.config().getOrDefault(StaffChatConfig.PERSIST_TOGGLES))
+        {
+            Sections.get(yaml.data(), PROFILES_PATH).ifPresent(section ->
+            {
+                for (String key : section.getKeys(false))
+                {
+                    try
+                    {
+                        UUID uuid = UUID.fromString(key);
+                        profilesByUuid.put(uuid, new Profile(plugin, yaml, uuid));
+                    }
+                    catch (IllegalArgumentException ignored) {}
+                }
+            });
+        }
+        
+        task = plugin.async().every(2).minutes().run(() -> {
+            if (yaml.isUpdated()) { yaml.save(); }
+        });
     }
     
-    public boolean isChatAutomatic(Player player){ return autoChatToggles.contains(player.getUniqueId()); }
-    
-    public void toggleAutoChat(Player player) { setAutoChatToggle(player, !isChatAutomatic(player)); }
-    
-    public void setAutoChatToggle(Player player, boolean state)
+    void end()
     {
-        // TODO: convert to profiles
+        task.cancel();
+        if (yaml.isUpdated()) { yaml.save(); }
+    }
+    
+    public StaffChatProfile getOrCreateProfile(UUID uuid)
+    {
+        return profilesByUuid.computeIfAbsent(uuid, k -> new Profile(plugin, yaml, k));
+    }
+    
+    public StaffChatProfile getOrCreateProfile(Player player)
+    {
+        return getOrCreateProfile(player.getUniqueId());
+    }
+    
+    public Optional<StaffChatProfile> getProfile(UUID uuid)
+    {
+        return Optional.ofNullable(profilesByUuid.get(uuid));
+    }
+    
+    public Optional<StaffChatProfile> getProfile(Player player)
+    {
+        return getProfile(player.getUniqueId());
+    }
+    
+    public boolean isChatAutomatic(Player player)
+    {
+        return getProfile(player).filter(StaffChatProfile::automaticStaffChat).isPresent();
+    }
+    
+    public void updateProfile(Player player)
+    {
+        @NullOr Profile profile = profilesByUuid.get(player.getUniqueId());
+        
+        if (Permissions.ACCESS.allows(player))
+        {
+            if (profile == null) { getOrCreateProfile(player); }
+        }
+        else
+        {
+            if (profile != null)
+            {
+                // Notify that they're no longer talking in staff chat.
+                if (profile.automaticStaffChat()) { profile.automaticStaffChat(false); }
+                
+                // No longer staff, delete data.
+                profile.clearStoredProfileData();
+                
+                // Remove from the map.
+                profilesByUuid.remove(player.getUniqueId());
+            }
+        }
     }
     
     static class Profile implements StaffChatProfile
@@ -72,7 +140,7 @@ public class StaffChatData
         
         String path()
         {
-            return "staff-chat.profiles." + uuid;
+            return PROFILES_PATH + "." + uuid;
         }
         
         @Override
@@ -85,7 +153,7 @@ public class StaffChatData
         }
     
         @Override
-        public void enableAutoChat(boolean enabled)
+        public void automaticStaffChat(boolean enabled)
         {
             // Avoid redundantly setting: already enabled if auto is not null
             if (enabled == (auto != null)) { return; }
@@ -93,7 +161,7 @@ public class StaffChatData
             if (plugin.events().call(new AutoStaffChatToggleEvent(this, enabled)).isCancelled()) { return; }
             
             auto = (enabled) ? Instant.now() : null;
-            updateProfileData();
+            updateStoredProfileData();
         }
         
         @Override
@@ -101,36 +169,48 @@ public class StaffChatData
         {
             return Optional.ofNullable(left);
         }
-    
+        
         @Override
-        public void receiveStaffChat(boolean enabled)
+        public void receivesStaffChatMessages(boolean enabled)
         {
             // Avoid redundantly setting: already enabled if `left` is null
-            // (the staff member is receiving messages because they have not left the chat)
+            // (the staff member is receiving messages because they haven't... left the chat)
             if (enabled == (left == null)) { return; }
             
             if (plugin.events().call(new ReceivingStaffChatToggleEvent(this, enabled)).isCancelled()) { return; }
             
             left = (enabled) ? null : Instant.now();
-            updateProfileData();
+            updateStoredProfileData();
         }
         
-        void updateProfileData()
+        boolean hasDefaultSettings()
+        {
+            return auto == null && left == null;
+        }
+        
+        void updateStoredProfileData()
         {
             if (!plugin.config().getOrDefault(StaffChatConfig.PERSIST_TOGGLES)) { return; }
             
-            if (auto == null && left == null)
+            if (hasDefaultSettings())
             {
-                yaml.data().set(path(), null);
-            }
-            else
-            {
-                ConfigurationSection section = Sections.getOrCreate(yaml.data(), path());
-            
-                AUTO_TOGGLE_DATE.set(section, auto);
-                LEFT_TOGGLE_DATE.set(section, left);
+                clearStoredProfileData();
+                return;
             }
             
+            ConfigurationSection section = Sections.getOrCreate(yaml.data(), path());
+        
+            AUTO_TOGGLE_DATE.set(section, auto);
+            LEFT_TOGGLE_DATE.set(section, left);
+            
+            yaml.updated(true);
+        }
+        
+        void clearStoredProfileData()
+        {
+            if (!plugin.config().getOrDefault(StaffChatConfig.PERSIST_TOGGLES)) { return; }
+            
+            yaml.data().set(path(), null);
             yaml.updated(true);
         }
     }
