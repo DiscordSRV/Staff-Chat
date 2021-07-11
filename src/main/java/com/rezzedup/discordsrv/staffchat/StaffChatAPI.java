@@ -25,11 +25,17 @@ package com.rezzedup.discordsrv.staffchat;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import pl.tlinkowski.annotation.basic.NullOr;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
+
 public interface StaffChatAPI
 {
+    StaffChatData data();
+    
     boolean isDiscordSrvHookEnabled();
     
     @NullOr TextChannel getDiscordChannelOrNull();
@@ -38,5 +44,11 @@ public interface StaffChatAPI
     
     void submitMessageFromDiscord(User author, Message message);
     
-    
+    default Collection<? extends Player> onlineStaffChatParticipants()
+    {
+        return Bukkit.getOnlinePlayers().stream()
+            .filter(Permissions.ACCESS::allows)
+            .filter(data()::isReceivingStaffChatMessages)
+            .collect(Collectors.toList());
+    }
 }

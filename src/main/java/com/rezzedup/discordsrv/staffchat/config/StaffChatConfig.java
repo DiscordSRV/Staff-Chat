@@ -30,6 +30,8 @@ import community.leaf.configvalues.bukkit.DefaultYamlValue;
 import community.leaf.configvalues.bukkit.YamlValue;
 import community.leaf.configvalues.bukkit.data.YamlDataFile;
 import community.leaf.configvalues.bukkit.migrations.Migration;
+import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 
 import java.util.List;
 
@@ -50,25 +52,49 @@ public class StaffChatConfig extends YamlDataFile
         YamlValue.ofBoolean("plugin.updates.notify-operators").defaults(true);
     
     public static final DefaultYamlValue<Boolean> PERSIST_TOGGLES =
-        YamlValue.ofBoolean("staffchat.toggles.chat-toggles-persist-after-restart").defaults(true);
+        YamlValue.ofBoolean("staff-chat.toggles.chat-toggles-persist-after-restart").defaults(true);
     
     public static final DefaultYamlValue<Boolean> LEAVING_STAFFCHAT_ENABLED =
-        YamlValue.ofBoolean("staffchat.toggles.let-staff-members-turn-off-staffchat").defaults(true);
+        YamlValue.ofBoolean("staff-chat.toggles.let-staff-members-turn-off-staffchat").defaults(true);
     
     public static final DefaultYamlValue<Boolean> NOTIFY_IF_TOGGLE_ENABLED =
-        YamlValue.ofBoolean("staffchat.toggles.notify-toggle-status-on-join")
+        YamlValue.ofBoolean("staff-chat.toggles.notify-toggle-status-on-join")
             .migrates(Migration.move("notify-staff-chat-enabled-on-join"))
             .defaults(true);
     
     public static final DefaultYamlValue<Boolean> PREFIXED_CHAT_ENABLED =
-        YamlValue.ofBoolean("staffchat.prefixed.enable-prefixed-chat-messages")
+        YamlValue.ofBoolean("staff-chat.prefixed.enable-prefixed-chat-messages")
             .migrates(Migration.move("enable-prefixed-chat-messages"))
             .defaults(false);
     
     public static final DefaultYamlValue<String> PREFIXED_CHAT_IDENTIFIER =
-        YamlValue.ofString("staffchat.prefixed.prefixed-chat-identifier")
+        YamlValue.ofString("staff-chat.prefixed.prefixed-chat-identifier")
             .migrates(Migration.move("prefixed-chat-identifier"))
             .defaults("@");
+    
+    public static final DefaultYamlValue<Boolean> MESSAGE_SOUND_ENABLED =
+        YamlValue.ofBoolean("staff-chat.sounds.messages.enabled").defaults(true);
+    
+    public static final DefaultYamlValue<Sound> MESSAGE_SOUND_NAME =
+        YamlValue.of("staff-chat.sounds.messages.name", Configs.SOUND).defaults(Sound.ENTITY_ITEM_PICKUP);
+    
+    public static final DefaultYamlValue<Float> MESSAGE_SOUND_VOLUME =
+        YamlValue.ofFloat("staff-chat.sounds.messages.volume").defaults(1.0F);
+    
+    public static final DefaultYamlValue<Float> MESSAGE_SOUND_PITCH =
+        YamlValue.ofFloat("staff-chat.sounds.messages.pitch").defaults(0.5F);
+    
+    public static final DefaultYamlValue<Boolean> NOTIFICATION_SOUND_ENABLED =
+        YamlValue.ofBoolean("staff-chat.sounds.notifications.enabled").defaults(true);
+    
+    public static final DefaultYamlValue<Sound> NOTIFICATION_SOUND_NAME =
+        YamlValue.of("staff-chat.sounds.notifications.name", Configs.SOUND).defaults(Sound.UI_LOOM_TAKE_RESULT);
+    
+    public static final DefaultYamlValue<Float> NOTIFICATION_SOUND_VOLUME =
+        YamlValue.ofFloat("staff-chat.sounds.notifications.volume").defaults(1.0F);
+    
+    public static final DefaultYamlValue<Float> NOTIFICATION_SOUND_PITCH =
+        YamlValue.ofFloat("staff-chat.sounds.notifications.pitch").defaults(0.75F);
     
     @AggregatedResult
     public static final List<YamlValue<?>> VALUES = Aggregates.list(StaffChatConfig.class, YamlValue.type());
@@ -95,7 +121,7 @@ public class StaffChatConfig extends YamlDataFile
                 set(VERSION, plugin.version());
             }
             
-            headerFromResource("staffchat.config.header.txt");
+            headerFromResource("staff-chat.config.header.txt");
             defaultValues(VALUES);
             
             if (isUpdated())
@@ -104,5 +130,33 @@ public class StaffChatConfig extends YamlDataFile
                 backupThenSave(plugin.backups(), "v" + existing);
             }
         });
+    }
+    
+    private void playSound(
+        Player player,
+        DefaultYamlValue<Boolean> enabled,
+        DefaultYamlValue<Sound> sound,
+        DefaultYamlValue<Float> volume,
+        DefaultYamlValue<Float> pitch
+    )
+    {
+        if (!getOrDefault(enabled)) { return; }
+        
+        player.playSound(
+            player.getLocation().add(0, 0.5, 0),
+            getOrDefault(sound),
+            getOrDefault(volume),
+            getOrDefault(pitch)
+        );
+    }
+    
+    public void playMessageSound(Player player)
+    {
+        playSound(player, MESSAGE_SOUND_ENABLED, MESSAGE_SOUND_NAME, MESSAGE_SOUND_VOLUME, MESSAGE_SOUND_PITCH);
+    }
+    
+    public void playNotificationSound(Player player)
+    {
+        playSound(player, NOTIFICATION_SOUND_ENABLED, NOTIFICATION_SOUND_NAME, NOTIFICATION_SOUND_VOLUME, NOTIFICATION_SOUND_PITCH);
     }
 }

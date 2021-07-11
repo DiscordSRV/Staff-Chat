@@ -52,7 +52,7 @@ public class PlayerStaffChatToggleListener implements Listener
     public void onAutomaticChat(AsyncPlayerChatEvent event)
     {
         Player player = event.getPlayer();
-        if (!plugin.data().isChatAutomatic(player)) { return; }
+        if (!plugin.data().isAutomaticStaffChatEnabled(player)) { return; }
         
         if (Permissions.ACCESS.allows(player))
         {
@@ -85,7 +85,7 @@ public class PlayerStaffChatToggleListener implements Listener
         
         if (!plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_TOGGLE_ENABLED)) { return; }
         if (!Permissions.ACCESS.allows(player)) { return; }
-        if (!plugin.data().isChatAutomatic(player)) { return; }
+        if (!plugin.data().isAutomaticStaffChatEnabled(player)) { return; }
         
         plugin.debug(getClass()).log(event, () ->
             "Player " + event.getPlayer().getName() + " joined: " +

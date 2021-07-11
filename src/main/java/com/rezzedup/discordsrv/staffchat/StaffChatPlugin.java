@@ -77,7 +77,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     private @NullOr Path backupsDirectoryPath;
     private @NullOr StaffChatConfig config;
     private @NullOr MessagesConfig messages;
-    private @NullOr StaffChatData data;
+    private @NullOr Data data;
     private @NullOr DiscordStaffChatListener discordSrvHook;
     
     @Override
@@ -95,7 +95,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
         this.config = new StaffChatConfig(this);
         this.messages = new MessagesConfig(this);
-        this.data = new StaffChatData(this);
+        this.data = new Data(this);
         
         upgradeLegacyConfig();
         
@@ -120,7 +120,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
             getLogger().warning("DiscordSRV is not currently enabled (messages will NOT be sent to Discord).");
             getLogger().warning("Staff chat messages will still work in-game, however.");
             
-            // Subscribe to DiscordSRV later because it somehow wasn't enabled yet.
+            // Subscribe to DiscordSRV later because it somehow hasn't enabled yet.
             getServer().getPluginManager().registerEvents(new DiscordSrvLoadedLaterListener(this), this);
         }
         
@@ -132,7 +132,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     {
         debug(getClass()).log("Disable", () -> "Disabling plugin...");
         
-        data().end();
+        if (data != null) { data.end(); }
         
         // Display toggle message so that auto staff-chat users are aware that their chat is public again.
         //getServer().getOnlinePlayers().stream().filter(data()::isChatAutomatic).forEach(data()::toggleAutoChat);
@@ -211,7 +211,10 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         
         getServer().getOnlinePlayers().stream()
             .filter(Permissions.ACCESS::allows)
-            .forEach(staff -> staff.sendMessage(content));
+            .forEach(staff -> {
+                staff.sendMessage(content);
+                config().playMessageSound(staff);
+            });
         
         getServer().getConsoleSender().sendMessage(content);
     }
