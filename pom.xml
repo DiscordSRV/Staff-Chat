@@ -6,12 +6,21 @@
 
     <groupId>com.rezzedup</groupId>
     <artifactId>discordsrv-staff-chat</artifactId>
-    <name>DiscordSRV-Staff-Chat</name>
     <version>1.4.0</version>
+
+    <name>DiscordSRV-Staff-Chat</name>
+    <inceptionYear>2017</inceptionYear>
+    <url>https://github.com/DiscordSRV/Staff-Chat</url>
+    <description>A staff-chat plugin that hooks into DiscordSRV.</description>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <shade.relocation>com.rezzedup.discordsrv.staffchat.shaded</shade.relocation>
+
+        <!-- License headers -->
+        <license.header.year>${project.inceptionYear}-2021</license.header.year>
+        <license.header.owner>RezzedUp and Contributors</license.header.owner>
+        <license.header.url>https://github.com/DiscordSRV/Staff-Chat</license.header.url>
     </properties>
 
     <repositories>
@@ -153,6 +162,44 @@
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Add license headers -->
+            <!-- `mvn license:format` or run the `update-license-headers` configuration -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>4.1</version>
+                <configuration>
+                    <properties>
+                        <year>${license.header.year}</year>
+                        <owner>${license.header.owner}</owner>
+                        <email>${license.header.url}</email>
+                    </properties>
+                    <licenseSets>
+                        <licenseSet>
+                            <header>com/mycila/maven/plugin/license/templates/MIT.txt</header>
+                            <excludes>
+                                <exclude>*.md</exclude>
+                                <exclude>*.txt</exclude>
+                                <exclude>*.xml</exclude>
+                                <exclude>*.yml</exclude>
+                                <exclude>.run/**</exclude>
+                                <exclude>examples/**</exclude>
+                                <exclude>src/test/resources/**</exclude>
+                                <exclude>src/main/resources/**</exclude>
+                            </excludes>
+                        </licenseSet>
+                    </licenseSets>
+                </configuration>
+                <!-- Check for missing license headers -->
+                <executions>
+                    <execution>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
