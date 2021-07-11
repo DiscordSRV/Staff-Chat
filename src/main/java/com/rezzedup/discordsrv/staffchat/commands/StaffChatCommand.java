@@ -24,8 +24,15 @@ public class StaffChatCommand implements CommandExecutor
         
         Player player = (Player) sender;
         
-        if (args.length <= 0) { plugin.data().toggleAutoChat(player); }
-        else { plugin.submitMessageFromInGame(player, String.join(" ", args)); }
+        if (args.length <= 0)
+        {
+            plugin.data().getOrCreateProfile(player).toggleAutomaticStaffChat();
+        }
+        else
+        {
+            plugin.submitMessageFromInGame(player, String.join(" ", args));
+        }
+        
         return true;
     }
 }

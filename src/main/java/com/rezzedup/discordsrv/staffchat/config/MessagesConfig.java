@@ -13,8 +13,8 @@ import java.util.List;
 
 public class MessagesConfig extends YamlDataFile
 {
-    public static final YamlValue<String> VERSION =
-        YamlValue.ofString("meta.config-version").maybe();
+    public static final YamlValue<Version> VERSION =
+        YamlValue.of("meta.config-version", Configs.VERSION).maybe();
     
     public static final DefaultYamlValue<String> IN_GAME_MESSAGE_FORMAT =
         YamlValue.ofString("messages.formats.in-game")
@@ -36,6 +36,22 @@ public class MessagesConfig extends YamlDataFile
             .migrates(Migration.move("disable-staff-chat"))
             .defaults("&d(&5&l&oStaff&d) &4->&c &nDisabled&c automatic staff chat");
     
+    public static final DefaultYamlValue<String> LEFT_CHAT_NOTIFICATION_SELF =
+        YamlValue.ofString("messages.notifications.leave.self")
+            .defaults("&d(&5&l&oStaff&d) &4->&c You &nleft&c the staff chat (you won't receive any messages)");
+    
+    public static final DefaultYamlValue<String> LEFT_CHAT_NOTIFICATION_OTHERS =
+        YamlValue.ofString("messages.notifications.leave.others")
+            .defaults("&d(&5&l&oStaff&d) &4->&c %player% &nleft&c the staff chat");
+    
+    public static final DefaultYamlValue<String> JOIN_CHAT_NOTIFICATION_SELF =
+        YamlValue.ofString("messages.notifications.join.self")
+            .defaults("&d(&5&l&oStaff&d) &4->&a You &njoined&a the staff chat (you will receive messages again)");
+    
+    public static final DefaultYamlValue<String> JOIN_CHAT_NOTIFICATION_OTHERS =
+        YamlValue.ofString("messages.notifications.join.others")
+            .defaults("&d(&5&l&oStaff&d) &4->&a %player% &njoined&a the staff chat");
+    
     @AggregatedResult
     public static final List<YamlValue<?>> VALUES = Aggregates.list(MessagesConfig.class, YamlValue.type());
     
@@ -52,13 +68,13 @@ public class MessagesConfig extends YamlDataFile
                 return;
             }
             
-            Version existing = Version.valueOf(get(VERSION).orElse(Configs.NO_VERSION));
+            Version existing = get(VERSION).orElse(Configs.NO_VERSION);
             boolean isOutdated = existing.lessThan(plugin.version());
             
             if (isOutdated)
             {
                 plugin.debug(getClass()).log("Reload", () -> "Updating outdated config: " + existing);
-                set(VERSION, plugin.version().toString());
+                set(VERSION, plugin.version());
             }
             
             defaultValues(VALUES);

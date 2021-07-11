@@ -27,38 +27,51 @@ public class StaffChatData
     
     private final StaffChatPlugin plugin;
     private final YamlDataFile yaml;
-    private final TaskContext<BukkitTask> task;
+    
+    private @NullOr TaskContext<BukkitTask> task = null;
     
     public StaffChatData(StaffChatPlugin plugin)
     {
         this.plugin = plugin;
         this.yaml = new YamlDataFile(plugin.directory().resolve("data"), "staff-chat.data.yml");
         
+        reload();
+    }
+    
+    protected void end()
+    {
+        if (task != null) { task.cancel(); }
+        if (yaml.isUpdated()) { yaml.save(); }
+    }
+    
+    public void reload()
+    {
+        end(); // End any existing tasks
+        plugin.getServer().getOnlinePlayers().forEach(this::updateProfile);
+        
+        // Load persistent toggles
         if (plugin.config().getOrDefault(StaffChatConfig.PERSIST_TOGGLES))
         {
             Sections.get(yaml.data(), PROFILES_PATH).ifPresent(section ->
             {
                 for (String key : section.getKeys(false))
                 {
-                    try
-                    {
-                        UUID uuid = UUID.fromString(key);
-                        profilesByUuid.put(uuid, new Profile(plugin, yaml, uuid));
-                    }
+                    try { getOrCreateProfile(UUID.fromString(key)); }
                     catch (IllegalArgumentException ignored) {}
                 }
             });
         }
         
+        // Start the save task
         task = plugin.async().every(2).minutes().run(() -> {
             if (yaml.isUpdated()) { yaml.save(); }
         });
-    }
-    
-    void end()
-    {
-        task.cancel();
-        if (yaml.isUpdated()) { yaml.save(); }
+        
+        // Bring back staff members who left the staff chat if leaving is disabled
+        if (!plugin.config().getOrDefault(StaffChatConfig.LEAVING_STAFFCHAT_ENABLED))
+        {
+            profilesByUuid.values().forEach(profile -> profile.receivesStaffChatMessages(true));
+        }
     }
     
     public StaffChatProfile getOrCreateProfile(UUID uuid)
@@ -96,6 +109,7 @@ public class StaffChatData
         }
         else
         {
+            // Not a staff member but has a loaded profile...
             if (profile != null)
             {
                 // Notify that they're no longer talking in staff chat.
@@ -153,6 +167,12 @@ public class StaffChatData
         }
     
         @Override
+        public boolean automaticStaffChat()
+        {
+            return auto != null;
+        }
+    
+        @Override
         public void automaticStaffChat(boolean enabled)
         {
             // Avoid redundantly setting: already enabled if auto is not null
@@ -168,6 +188,13 @@ public class StaffChatData
         public Optional<Instant> sinceLeftStaffChat()
         {
             return Optional.ofNullable(left);
+        }
+    
+        @Override
+        public boolean receivesStaffChatMessages()
+        {
+            // hasn't left the staff chat or leaving is disabled outright
+            return left == null || !plugin.config().getOrDefault(StaffChatConfig.LEAVING_STAFFCHAT_ENABLED);
         }
         
         @Override
@@ -187,6 +214,14 @@ public class StaffChatData
         {
             return auto == null && left == null;
         }
+    
+        void clearStoredProfileData()
+        {
+            if (!plugin.config().getOrDefault(StaffChatConfig.PERSIST_TOGGLES)) { return; }
+        
+            yaml.data().set(path(), null);
+            yaml.updated(true);
+        }
         
         void updateStoredProfileData()
         {
@@ -203,14 +238,6 @@ public class StaffChatData
             AUTO_TOGGLE_DATE.set(section, auto);
             LEFT_TOGGLE_DATE.set(section, left);
             
-            yaml.updated(true);
-        }
-        
-        void clearStoredProfileData()
-        {
-            if (!plugin.config().getOrDefault(StaffChatConfig.PERSIST_TOGGLES)) { return; }
-            
-            yaml.data().set(path(), null);
             yaml.updated(true);
         }
     }

@@ -13,8 +13,8 @@ import java.util.List;
 
 public class StaffChatConfig extends YamlDataFile
 {
-    public static final YamlValue<String> VERSION =
-        YamlValue.ofString("meta.config-version").maybe();
+    public static final YamlValue<Version> VERSION =
+        YamlValue.of("meta.config-version", Configs.VERSION).maybe();
     
     public static final DefaultYamlValue<Boolean> METRICS_ENABLED =
         YamlValue.ofBoolean("plugin.metrics")
@@ -53,7 +53,7 @@ public class StaffChatConfig extends YamlDataFile
     
     public StaffChatConfig(StaffChatPlugin plugin)
     {
-        super(plugin.directory(), "staffchat.config.yml");
+        super(plugin.directory(), "staff-chat.config.yml");
         plugin.debug(getClass()).logConfigValues(getFilePath(), VALUES);
         
         reloadsWith(() ->
@@ -64,13 +64,13 @@ public class StaffChatConfig extends YamlDataFile
                 return;
             }
             
-            Version existing = Version.valueOf(get(VERSION).orElse(Configs.NO_VERSION));
+            Version existing = get(VERSION).orElse(Configs.NO_VERSION);
             boolean isOutdated = existing.lessThan(plugin.version());
             
             if (isOutdated)
             {
                 plugin.debug(getClass()).log("Reload", () -> "Updating outdated config: " + existing);
-                set(VERSION, plugin.version().toString());
+                set(VERSION, plugin.version());
             }
             
             headerFromResource("staffchat.config.header.txt");

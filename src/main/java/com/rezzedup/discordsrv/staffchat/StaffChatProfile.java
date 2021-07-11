@@ -13,25 +13,19 @@ public interface StaffChatProfile
     
     Optional<Instant> sinceEnabledAutoChat();
     
+    boolean automaticStaffChat();
+    
     void automaticStaffChat(boolean enabled);
     
     Optional<Instant> sinceLeftStaffChat();
     
-    void receivesStaffChatMessages(boolean enabled);
+    boolean receivesStaffChatMessages();
     
-    default boolean automaticStaffChat()
-    {
-        return sinceEnabledAutoChat().isPresent();
-    }
+    void receivesStaffChatMessages(boolean enabled);
     
     default void toggleAutomaticStaffChat()
     {
         automaticStaffChat(!automaticStaffChat());
-    }
-    
-    default boolean receivesStaffChatMessages()
-    {
-        return sinceLeftStaffChat().isEmpty();
     }
     
     default Optional<Player> toPlayer()
