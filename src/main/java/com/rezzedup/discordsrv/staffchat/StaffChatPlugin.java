@@ -132,7 +132,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     {
         debug(getClass()).log("Disable", () -> "Disabling plugin...");
         
-        if (data != null) { data.end(); }
+        data().end();
         
         // Display toggle message so that auto staff-chat users are aware that their chat is public again.
         //getServer().getOnlinePlayers().stream().filter(data()::isChatAutomatic).forEach(data()::toggleAutoChat);
@@ -171,7 +171,8 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     
     public MessagesConfig messages() { return initialized(messages, "messages"); }
     
-    public StaffChatData data() { return initialized(data, "data"); }
+    @Override
+    public Data data() { return initialized(data, "data"); }
     
     @Override
     public boolean isDiscordSrvHookEnabled() { return discordSrvHook != null; }

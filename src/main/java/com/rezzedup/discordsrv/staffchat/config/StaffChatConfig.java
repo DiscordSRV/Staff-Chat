@@ -49,13 +49,13 @@ public class StaffChatConfig extends YamlDataFile
         YamlValue.ofBoolean("plugin.updates.check-for-updates").defaults(true);
     
     public static final DefaultYamlValue<Boolean> NOTIFY_IF_UPDATE_AVAILABLE =
-        YamlValue.ofBoolean("plugin.updates.notify-operators").defaults(true);
+        YamlValue.ofBoolean("plugin.updates.notify-in-game").defaults(true);
     
     public static final DefaultYamlValue<Boolean> PERSIST_TOGGLES =
         YamlValue.ofBoolean("staff-chat.toggles.chat-toggles-persist-after-restart").defaults(true);
     
     public static final DefaultYamlValue<Boolean> LEAVING_STAFFCHAT_ENABLED =
-        YamlValue.ofBoolean("staff-chat.toggles.let-staff-members-turn-off-staffchat").defaults(true);
+        YamlValue.ofBoolean("staff-chat.toggles.let-staff-members-leave-staffchat").defaults(true);
     
     public static final DefaultYamlValue<Boolean> NOTIFY_IF_TOGGLE_ENABLED =
         YamlValue.ofBoolean("staff-chat.toggles.notify-toggle-status-on-join")
@@ -72,6 +72,8 @@ public class StaffChatConfig extends YamlDataFile
             .migrates(Migration.move("prefixed-chat-identifier"))
             .defaults("@");
     
+    // Message Sound
+    
     public static final DefaultYamlValue<Boolean> MESSAGE_SOUND_ENABLED =
         YamlValue.ofBoolean("staff-chat.sounds.messages.enabled").defaults(true);
     
@@ -83,6 +85,8 @@ public class StaffChatConfig extends YamlDataFile
     
     public static final DefaultYamlValue<Float> MESSAGE_SOUND_PITCH =
         YamlValue.ofFloat("staff-chat.sounds.messages.pitch").defaults(0.5F);
+    
+    // Notification Sound
     
     public static final DefaultYamlValue<Boolean> NOTIFICATION_SOUND_ENABLED =
         YamlValue.ofBoolean("staff-chat.sounds.notifications.enabled").defaults(true);
@@ -102,7 +106,6 @@ public class StaffChatConfig extends YamlDataFile
     public StaffChatConfig(StaffChatPlugin plugin)
     {
         super(plugin.directory(), "staff-chat.config.yml");
-        plugin.debug(getClass()).logConfigValues(getFilePath(), VALUES);
         
         reloadsWith(() ->
         {

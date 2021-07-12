@@ -22,8 +22,6 @@
  */
 package com.rezzedup.discordsrv.staffchat;
 
-import community.leaf.configvalues.bukkit.DefaultYamlValue;
-import community.leaf.configvalues.bukkit.YamlValue;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import org.bukkit.entity.Player;
@@ -35,13 +33,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.time.OffsetDateTime;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.function.Supplier;
 
 public class Debugger
 {
-    private static String now() { return OffsetDateTime.now().toString(); }
+    private static String now() { return LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString(); }
     
     private static final DebugLogger DISABLED = message -> {};
     
@@ -198,38 +196,6 @@ public class Debugger
             log(ChatService.DISCORD, "Message", () ->
                 "from(" + author.getName() + "#" + author.getDiscriminator() + ") message(\"" + message.getContentStripped() + "\")"
             );
-        }
-        
-        default void logConfigValues(Path filePath, List<YamlValue<?>> values)
-        {
-            recordDebugLogEntry(() ->
-            {
-                String name = filePath.getFileName().toString();
-                StringBuilder defaults = new StringBuilder();
-                
-                defaults.append("Total: ").append(values.size()).append(" => ");
-                
-                boolean isAppended = false;
-                
-                for (YamlValue<?> value : values)
-                {
-                    if (isAppended) { defaults.append(" :: "); }
-                    else { isAppended = true; }
-                    
-                    defaults.append("path(").append(value.key()).append(")");
-                    
-                    if (value instanceof DefaultYamlValue<?>)
-                    {
-                        defaults.append(" default(").append(((DefaultYamlValue<?>) value).getDefaultValue()).append(")");
-                    }
-                    else
-                    {
-                        defaults.append(" maybe()");
-                    }
-                }
-                
-                return "[" + name + "] " + defaults;
-            });
         }
     }
 }

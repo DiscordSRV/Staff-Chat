@@ -80,7 +80,6 @@ public class MessagesConfig extends YamlDataFile
     public MessagesConfig(StaffChatPlugin plugin)
     {
         super(plugin.directory(), "messages.config.yml");
-        plugin.debug(getClass()).logConfigValues(getFilePath(), VALUES);
         
         reloadsWith(() ->
         {

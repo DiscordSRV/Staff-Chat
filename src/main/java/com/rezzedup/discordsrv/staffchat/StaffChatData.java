@@ -29,13 +29,9 @@ import java.util.UUID;
 
 public interface StaffChatData
 {
-    void reload();
-    
     StaffChatProfile getOrCreateProfile(UUID uuid);
     
     Optional<StaffChatProfile> getProfile(UUID uuid);
-    
-    void updateProfile(Player player);
     
     default StaffChatProfile getOrCreateProfile(Player player)
     {

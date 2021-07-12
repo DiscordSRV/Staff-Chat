@@ -41,40 +41,25 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-class Data implements StaffChatData
+public class Data extends YamlDataFile implements StaffChatData
 {
     private static final String PROFILES_PATH = "staff-chat.profiles";
     
     private final Map<UUID, Profile> profilesByUuid = new HashMap<>();
     
     private final StaffChatPlugin plugin;
-    private final YamlDataFile yaml;
     
     private @NullOr TaskContext<BukkitTask> task = null;
     
     public Data(StaffChatPlugin plugin)
     {
+        super(plugin.directory().resolve("data"), "staff-chat.data.yml");
         this.plugin = plugin;
-        this.yaml = new YamlDataFile(plugin.directory().resolve("data"), "staff-chat.data.yml");
         
-        reload();
-    }
-    
-    protected void end()
-    {
-        if (task != null) { task.cancel(); }
-        if (yaml.isUpdated()) { yaml.save(); }
-    }
-    
-    public void reload()
-    {
-        end(); // End any existing tasks
-        plugin.getServer().getOnlinePlayers().forEach(this::updateProfile);
-        
-        // Load persistent toggles
+        // Load persistent toggles.
         if (plugin.config().getOrDefault(StaffChatConfig.PERSIST_TOGGLES))
         {
-            Sections.get(yaml.data(), PROFILES_PATH).ifPresent(section ->
+            Sections.get(data(), PROFILES_PATH).ifPresent(section ->
             {
                 for (String key : section.getKeys(false))
                 {
@@ -84,22 +69,25 @@ class Data implements StaffChatData
             });
         }
         
-        // Start the save task
+        // Start the save task.
         task = plugin.async().every(2).minutes().run(() -> {
-            if (yaml.isUpdated()) { yaml.save(); }
+            if (isUpdated()) { save(); }
         });
         
-        // Bring back staff members who left the staff chat if leaving is disabled
-        if (!plugin.config().getOrDefault(StaffChatConfig.LEAVING_STAFFCHAT_ENABLED))
-        {
-            profilesByUuid.values().forEach(profile -> profile.receivesStaffChatMessages(true));
-        }
+        // Update profiles of all online players when reloaded.
+        reloadsWith(() -> plugin.getServer().getOnlinePlayers().forEach(this::updateProfile));
+    }
+    
+    protected void end()
+    {
+        if (task != null) { task.cancel(); }
+        if (isUpdated()) { save(); }
     }
     
     @Override
     public StaffChatProfile getOrCreateProfile(UUID uuid)
     {
-        return profilesByUuid.computeIfAbsent(uuid, k -> new Profile(plugin, yaml, k));
+        return profilesByUuid.computeIfAbsent(uuid, k -> new Profile(plugin, this, k));
     }
     
     @Override
@@ -108,14 +96,21 @@ class Data implements StaffChatData
         return Optional.ofNullable(profilesByUuid.get(uuid));
     }
     
-    @Override
     public void updateProfile(Player player)
     {
         @NullOr Profile profile = profilesByUuid.get(player.getUniqueId());
         
         if (Permissions.ACCESS.allows(player))
         {
-            if (profile == null) { getOrCreateProfile(player); }
+            // Ensure that this staff member has an active profile.
+            if (profile == null) { profile = (Profile) getOrCreateProfile(player); }
+            
+            // If leaving the staff chat is disabled...
+            if (!plugin.config().getOrDefault(StaffChatConfig.LEAVING_STAFFCHAT_ENABLED))
+            {
+                // Bring back staff member if they previously left.
+                profile.receivesStaffChatMessages(true);
+            }
         }
         else
         {
