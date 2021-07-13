@@ -184,14 +184,21 @@ public class Debugger
             throw exception;
         }
         
-        default void logMessageSubmissionFromInGame(Player author, String message)
+        default void logConsoleChatMessage(String message)
+        {
+            log(ChatService.MINECRAFT, "Message", () ->
+                "from(<CONSOLE>) message(\"" + message + "\")"
+            );
+        }
+        
+        default void logPlayerChatMessage(Player author, String message)
         {
             log(ChatService.MINECRAFT, "Message", () ->
                 "from(" + author.getName() + ") message(\"" + message + "\")"
             );
         }
         
-        default void logMessageSubmissionFromDiscord(User author, Message message)
+        default void logDiscordChatMessage(User author, Message message)
         {
             log(ChatService.DISCORD, "Message", () ->
                 "from(" + author.getName() + "#" + author.getDiscriminator() + ") message(\"" + message.getContentStripped() + "\")"

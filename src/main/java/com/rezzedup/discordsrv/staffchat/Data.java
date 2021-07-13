@@ -108,8 +108,12 @@ public class Data extends YamlDataFile implements StaffChatData
             // If leaving the staff chat is disabled...
             if (!plugin.config().getOrDefault(StaffChatConfig.LEAVING_STAFFCHAT_ENABLED))
             {
-                // Bring back staff member if they previously left.
-                profile.receivesStaffChatMessages(true);
+                // ... and this staff member previously left the staff chat ...
+                if (profile.left != null)
+                {
+                    // Bring them back.
+                    profile.receivesStaffChatMessages(true);
+                }
             }
         }
         else
@@ -180,9 +184,6 @@ public class Data extends YamlDataFile implements StaffChatData
         @Override
         public void automaticStaffChat(boolean enabled)
         {
-            // Avoid redundantly setting: already enabled if auto is not null
-            if (enabled == (auto != null)) { return; }
-            
             if (plugin.events().call(new AutoStaffChatToggleEvent(this, enabled)).isCancelled()) { return; }
             
             auto = (enabled) ? Instant.now() : null;
@@ -205,10 +206,6 @@ public class Data extends YamlDataFile implements StaffChatData
         @Override
         public void receivesStaffChatMessages(boolean enabled)
         {
-            // Avoid redundantly setting: already enabled if `left` is null
-            // (the staff member is receiving messages because they haven't... left the chat)
-            if (enabled == (left == null)) { return; }
-            
             if (plugin.events().call(new ReceivingStaffChatToggleEvent(this, enabled)).isCancelled()) { return; }
             
             left = (enabled) ? null : Instant.now();

@@ -20,33 +20,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.rezzedup.discordsrv.staffchat;
+package com.rezzedup.discordsrv.staffchat.events;
 
-import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
-import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
-import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
+import com.rezzedup.discordsrv.staffchat.ChatService;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import pl.tlinkowski.annotation.basic.NullOr;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.event.HandlerList;
 
-import java.util.stream.Stream;
-
-public interface StaffChatAPI
+@SuppressWarnings("unused")
+public class ConsoleStaffChatMessageEvent extends StaffChatMessageEvent<ConsoleCommandSender, String>
 {
-    StaffChatData data();
-    
-    boolean isDiscordSrvHookEnabled();
-    
-    @NullOr TextChannel getDiscordChannelOrNull();
-    
-    void submitMessageFromInGame(Player author, String message);
-    
-    void submitMessageFromDiscord(User author, Message message);
-    
-    default Stream<? extends Player> onlineStaffChatParticipants()
+    public ConsoleStaffChatMessageEvent(String text)
     {
-        return Bukkit.getOnlinePlayers().stream()
-            .filter(Permissions.ACCESS::allows)
-            .filter(data()::isReceivingStaffChatMessages);
+        super(Bukkit.getConsoleSender(), text, text);
     }
+    
+    @Override
+    public final ChatService getSource() { return ChatService.MINECRAFT; }
+    
+    @Override
+    public final ChatService getDestination() { return ChatService.DISCORD; }
+    
+    //
+    //  - - - HandlerList boilerplate - - -
+    //
+    
+    public static final HandlerList HANDLERS = new HandlerList();
+    
+    @Override
+    public HandlerList getHandlers() { return HANDLERS; }
+    
+    public static HandlerList getHandlerList() { return HANDLERS; }
 }

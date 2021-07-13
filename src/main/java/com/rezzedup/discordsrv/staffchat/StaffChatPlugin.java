@@ -28,24 +28,17 @@ import com.rezzedup.discordsrv.staffchat.commands.StaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.commands.ToggleStaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
-import com.rezzedup.discordsrv.staffchat.events.DiscordStaffChatMessageEvent;
-import com.rezzedup.discordsrv.staffchat.events.PlayerStaffChatMessageEvent;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordStaffChatListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerPrefixedMessageListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener;
 import com.rezzedup.discordsrv.staffchat.util.FileIO;
-import com.rezzedup.discordsrv.staffchat.util.MappedPlaceholder;
-import com.rezzedup.discordsrv.staffchat.util.Strings;
 import community.leaf.eventful.bukkit.EventSource;
 import community.leaf.tasks.bukkit.BukkitTaskSource;
 import github.scarsz.discordsrv.DiscordSRV;
-import github.scarsz.discordsrv.dependencies.emoji.EmojiParser;
-import github.scarsz.discordsrv.dependencies.jda.api.entities.Member;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SimplePie;
 import org.bukkit.command.CommandExecutor;
@@ -58,9 +51,6 @@ import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
-
-import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 
 public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, EventSource, StaffChatAPI
 {
@@ -206,120 +196,16 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
             : null;
     }
     
-    private void inGameAnnounce(String message)
-    {
-        String content = colorful(message);
-        
-        getServer().getOnlinePlayers().stream()
-            .filter(Permissions.ACCESS::allows)
-            .forEach(staff -> {
-                staff.sendMessage(content);
-                config().playMessageSound(staff);
-            });
-        
-        getServer().getConsoleSender().sendMessage(content);
-    }
-    
-    private void updatePlaceholdersThenAnnounceInGame(String format, MappedPlaceholder placeholders)
-    {
-        // If the value of %message% doesn't exist for some reason, don't announce.
-        if (Strings.isEmptyOrNull(placeholders.get("message"))) { return; }
-        inGameAnnounce(placeholders.update(format));
-    }
-    
     @Override
     public void submitMessageFromInGame(Player author, String message)
     {
-        Objects.requireNonNull(author, "author");
-        Objects.requireNonNull(message, "message");
-        
-        debug(getClass()).logMessageSubmissionFromInGame(author, message);
-        
-        PlayerStaffChatMessageEvent event =
-            events().call(new PlayerStaffChatMessageEvent(author, message));
-        
-        if (event.isCancelled() || event.getText().isEmpty())
-        {
-            debug(getClass()).log(ChatService.MINECRAFT, "Message", () -> "Cancelled or text is empty");
-            return;
-        }
-        
-        String text = event.getText();
-        String format = messages().getOrDefault(MessagesConfig.IN_GAME_MESSAGE_FORMAT);
-        
-        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
-        {
-            // Update format's PAPI placeholders before inserting the message
-            // (which *could* contain arbitrary placeholders itself, ah placeholder injection).
-            format = PlaceholderAPI.setPlaceholders(author, format);
-        }
-        
-        MappedPlaceholder placeholders = new MappedPlaceholder();
-        
-        placeholders.map("message", "content", "text").to(() -> text);
-        placeholders.map("user", "name", "username", "player", "sender").to(author::getName);
-        placeholders.map("nickname", "displayname").to(author::getDisplayName);
-        
-        updatePlaceholdersThenAnnounceInGame(format, placeholders);
-        
-        if (getDiscordChannelOrNull() != null)
-        {
-            debug(getClass()).log(ChatService.MINECRAFT, "Message", () ->
-                "Sending message to discord channel: " + CHANNEL + " => " + getDiscordChannelOrNull()
-            );
-            
-            // Send to discord off the main thread (just like DiscordSRV does)
-            getServer().getScheduler().runTaskAsynchronously(this, () -> 
-                DiscordSRV.getPlugin().processChatMessage(author, message, CHANNEL, false)
-            );
-        }
-        else
-        {
-            debug(getClass()).log(ChatService.MINECRAFT, "Message", () ->
-                "Unable to send message to discord: " + CHANNEL + " => null"
-            );
-        }
+        messages().processPlayerChat(author, message);
     }
     
     @Override
     public void submitMessageFromDiscord(User author, Message message)
     {
-        Objects.requireNonNull(author, "author");
-        Objects.requireNonNull(message, "message");
-        
-        debug(getClass()).logMessageSubmissionFromDiscord(author, message);
-        
-        DiscordStaffChatMessageEvent event =
-            events().call(new DiscordStaffChatMessageEvent(author, message, message.getContentStripped()));
-        
-        if (event.isCancelled() || event.getText().isEmpty())
-        {
-            debug(getClass()).log(ChatService.DISCORD, "Message", () -> "Cancelled or text is empty");
-            return;
-        }
-    
-        // Emoji Unicode -> Alias (library included with DiscordSRV)
-        String text = EmojiParser.parseToAliases(event.getText());
-        String format = messages().getOrDefault(MessagesConfig.DISCORD_MESSAGE_FORMAT);
-        
-        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI"))
-        {
-            // Update format's PAPI placeholders before inserting the message.
-            format = PlaceholderAPI.setPlaceholders(null, format);
-        }
-        
-        MappedPlaceholder placeholders = new MappedPlaceholder();
-        
-        placeholders.map("message", "content", "text").to(() -> text);
-        placeholders.map("user", "name", "username", "sender").to(author::getName);
-        placeholders.map("discriminator", "discrim").to(author::getDiscriminator);
-        
-        placeholders.map("nickname", "displayname").to(() -> {
-            @NullOr Member member = message.getGuild().getMember(author);
-            return (member == null ) ? "" : member.getEffectiveName();
-        });
-        
-        updatePlaceholdersThenAnnounceInGame(format, placeholders);
+        messages().processDiscordChat(author, message);
     }
     
     private void upgradeLegacyConfig()

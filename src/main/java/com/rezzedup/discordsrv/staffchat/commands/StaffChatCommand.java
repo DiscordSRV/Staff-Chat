@@ -38,21 +38,28 @@ public class StaffChatCommand implements CommandExecutor
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
     {
-        if (sender instanceof ConsoleCommandSender)
-        {
-            sender.sendMessage("Only players may use this command: " + label);
-            return true;
-        }
-        
-        Player player = (Player) sender;
-        
         if (args.length <= 0)
         {
-            plugin.data().getOrCreateProfile(player).toggleAutomaticStaffChat();
+            // Show usage to console (only players can enable auto chat)
+            if (!(sender instanceof Player)) { return false; }
+            plugin.data().getOrCreateProfile((Player) sender).toggleAutomaticStaffChat();
         }
         else
         {
-            plugin.submitMessageFromInGame(player, String.join(" ", args));
+            String message = String.join(" ", args);
+            
+            if (sender instanceof Player)
+            {
+                plugin.messages().processPlayerChat((Player) sender, message);
+            }
+            else if (sender instanceof ConsoleCommandSender)
+            {
+                plugin.messages().processConsoleChat(message);
+            }
+            else
+            {
+                sender.sendMessage("Unsupported command sender type: " + sender.getClass().getSimpleName());
+            }
         }
         
         return true;

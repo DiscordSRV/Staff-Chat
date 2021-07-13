@@ -92,7 +92,7 @@ public class StaffChatConfig extends YamlDataFile
         YamlValue.ofBoolean("staff-chat.sounds.notifications.enabled").defaults(true);
     
     public static final DefaultYamlValue<Sound> NOTIFICATION_SOUND_NAME =
-        YamlValue.of("staff-chat.sounds.notifications.name", Configs.SOUND).defaults(Sound.UI_LOOM_TAKE_RESULT);
+        YamlValue.of("staff-chat.sounds.notifications.name", Configs.SOUND).defaults(Sound.ENTITY_ITEM_PICKUP);
     
     public static final DefaultYamlValue<Float> NOTIFICATION_SOUND_VOLUME =
         YamlValue.ofFloat("staff-chat.sounds.notifications.volume").defaults(1.0F);

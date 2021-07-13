@@ -24,12 +24,9 @@ package com.rezzedup.discordsrv.staffchat.listeners;
 
 import com.rezzedup.discordsrv.staffchat.Permissions;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
-import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.events.AutoStaffChatToggleEvent;
 import com.rezzedup.discordsrv.staffchat.events.ReceivingStaffChatToggleEvent;
-import com.rezzedup.discordsrv.staffchat.util.Strings;
-import community.leaf.configvalues.bukkit.DefaultYamlValue;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -93,9 +90,7 @@ public class PlayerStaffChatToggleListener implements Listener
         );
         
         plugin.sync().delay(10).ticks().run(() ->
-            player.sendMessage(Strings.colorful(
-                plugin.messages().getOrDefault(MessagesConfig.AUTO_ENABLED_NOTIFICATION)
-            ))
+            plugin.messages().notifyAutoChatEnabled(player)
         );
     }
     
@@ -112,12 +107,8 @@ public class PlayerStaffChatToggleListener implements Listener
         
         if (player == null || event.isQuiet()) { return; }
     
-        DefaultYamlValue<String> message =
-            (event.isEnablingAutomaticChat())
-                ? MessagesConfig.AUTO_ENABLED_NOTIFICATION
-                : MessagesConfig.AUTO_DISABLED_NOTIFICATION;
-        
-        player.sendMessage(Strings.colorful(plugin.messages().getOrDefault(message)));
+        if (event.isEnablingAutomaticChat()) { plugin.messages().notifyAutoChatEnabled(player); }
+        else { plugin.messages().notifyAutoChatDisabled(player); }
     }
     
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -133,23 +124,7 @@ public class PlayerStaffChatToggleListener implements Listener
         
         if (player == null || event.isQuiet()) { return; }
         
-        DefaultYamlValue<String> self =
-            (event.isLeavingStaffChat())
-                ? MessagesConfig.LEFT_CHAT_NOTIFICATION_SELF
-                : MessagesConfig.JOIN_CHAT_NOTIFICATION_SELF;
-        
-        player.sendMessage(Strings.colorful(plugin.messages().getOrDefault(self)));
-        
-        DefaultYamlValue<String> others =
-            (event.isLeavingStaffChat())
-                ? MessagesConfig.LEFT_CHAT_NOTIFICATION_OTHERS
-                : MessagesConfig.JOIN_CHAT_NOTIFICATION_OTHERS;
-        
-        String notification = Strings.colorful(plugin.messages().getOrDefault(others));
-        
-        plugin.getServer().getOnlinePlayers().stream()
-            .filter(Permissions.ACCESS::allows)
-            .filter(staff -> !staff.equals(player))
-            .forEach(staff -> staff.sendMessage(notification));
+        if (event.isLeavingStaffChat()) { plugin.messages().notifyLeaveChat(player); }
+        else { plugin.messages().notifyJoinChat(player); }
     }
 }
