@@ -37,6 +37,8 @@ import java.util.List;
 
 public class StaffChatConfig extends YamlDataFile
 {
+    public static final String FILE_NAME = "staff-chat.config.yml";
+    
     public static final YamlValue<Version> VERSION =
         YamlValue.of("meta.config-version", Configs.VERSION).maybe();
     
@@ -78,7 +80,7 @@ public class StaffChatConfig extends YamlDataFile
         YamlValue.ofBoolean("staff-chat.sounds.messages.enabled").defaults(true);
     
     public static final DefaultYamlValue<Sound> MESSAGE_SOUND_NAME =
-        YamlValue.of("staff-chat.sounds.messages.name", Configs.SOUND).defaults(Sound.ENTITY_ITEM_PICKUP);
+        YamlValue.ofSound("staff-chat.sounds.messages.name").defaults(Sound.ENTITY_ITEM_PICKUP);
     
     public static final DefaultYamlValue<Float> MESSAGE_SOUND_VOLUME =
         YamlValue.ofFloat("staff-chat.sounds.messages.volume").defaults(1.0F);
@@ -92,7 +94,7 @@ public class StaffChatConfig extends YamlDataFile
         YamlValue.ofBoolean("staff-chat.sounds.notifications.enabled").defaults(true);
     
     public static final DefaultYamlValue<Sound> NOTIFICATION_SOUND_NAME =
-        YamlValue.of("staff-chat.sounds.notifications.name", Configs.SOUND).defaults(Sound.ENTITY_ITEM_PICKUP);
+        YamlValue.ofSound("staff-chat.sounds.notifications.name").defaults(Sound.ENTITY_ITEM_PICKUP);
     
     public static final DefaultYamlValue<Float> NOTIFICATION_SOUND_VOLUME =
         YamlValue.ofFloat("staff-chat.sounds.notifications.volume").defaults(1.0F);
@@ -105,7 +107,7 @@ public class StaffChatConfig extends YamlDataFile
     
     public StaffChatConfig(StaffChatPlugin plugin)
     {
-        super(plugin.directory(), "staff-chat.config.yml");
+        super(plugin.directory(), FILE_NAME);
         
         reloadsWith(() ->
         {

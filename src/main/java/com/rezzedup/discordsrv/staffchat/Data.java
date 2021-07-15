@@ -135,9 +135,9 @@ public class Data extends YamlDataFile implements StaffChatData
     
     static class Profile implements StaffChatProfile
     {
-        static final YamlValue<Instant> AUTO_TOGGLE_DATE = YamlValue.of("toggles.auto", Configs.INSTANT).maybe();
+        static final YamlValue<Instant> AUTO_TOGGLE_DATE = YamlValue.ofInstant("toggles.auto").maybe();
         
-        static final YamlValue<Instant> LEFT_TOGGLE_DATE = YamlValue.of("toggles.left", Configs.INSTANT).maybe();
+        static final YamlValue<Instant> LEFT_TOGGLE_DATE = YamlValue.ofInstant("toggles.left").maybe();
         
         private final StaffChatPlugin plugin;
         private final YamlDataFile yaml;

@@ -39,6 +39,8 @@ public interface StaffChatAPI
     
     @NullOr TextChannel getDiscordChannelOrNull();
     
+    void submitMessageFromConsole(String message);
+    
     void submitMessageFromInGame(Player author, String message);
     
     void submitMessageFromDiscord(User author, Message message);

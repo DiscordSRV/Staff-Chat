@@ -50,11 +50,11 @@ public class StaffChatCommand implements CommandExecutor
             
             if (sender instanceof Player)
             {
-                plugin.messages().processPlayerChat((Player) sender, message);
+                plugin.submitMessageFromInGame((Player) sender, message);
             }
             else if (sender instanceof ConsoleCommandSender)
             {
-                plugin.messages().processConsoleChat(message);
+                plugin.submitMessageFromConsole(message);
             }
             else
             {

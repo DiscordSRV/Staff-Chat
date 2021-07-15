@@ -33,6 +33,8 @@ import com.rezzedup.discordsrv.staffchat.listeners.DiscordStaffChatListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerPrefixedMessageListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener;
 import com.rezzedup.discordsrv.staffchat.util.FileIO;
+import community.leaf.configvalues.bukkit.YamlValue;
+import community.leaf.configvalues.bukkit.data.YamlDataFile;
 import community.leaf.eventful.bukkit.EventSource;
 import community.leaf.tasks.bukkit.BukkitTaskSource;
 import github.scarsz.discordsrv.DiscordSRV;
@@ -51,6 +53,9 @@ import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, EventSource, StaffChatAPI
 {
@@ -61,33 +66,40 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     
     public static final String DISCORDSRV = "DiscordSRV";
     
-    private @NullOr Debugger debugger;
+    private final Set<String> existingConfigs = new HashSet<>();
+    
     private @NullOr Version version;
     private @NullOr Path pluginDirectoryPath;
     private @NullOr Path backupsDirectoryPath;
+    private @NullOr Debugger debugger;
     private @NullOr StaffChatConfig config;
     private @NullOr MessagesConfig messages;
     private @NullOr Data data;
+    private @NullOr MessageProcessor processor;
     private @NullOr DiscordStaffChatListener discordSrvHook;
     
     @Override
     public void onEnable()
     {
-        // First and foremost, setup debugging
-        this.debugger = new Debugger(this);
         this.version = Version.valueOf(getDescription().getVersion());
-    
+        
+        this.pluginDirectoryPath = getDataFolder().toPath();
+        this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
+        
+        checkExistingConfigs();
+        
+        this.debugger = new Debugger(this);
+        
         debug(getClass()).header(() -> "Starting Plugin: " + this);
         debugger().schedulePluginStatus(getClass(), "Enable");
         
-        // Setup files
-        this.pluginDirectoryPath = getDataFolder().toPath();
-        this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
         this.config = new StaffChatConfig(this);
         this.messages = new MessagesConfig(this);
-        this.data = new Data(this);
-        
+    
         upgradeLegacyConfig();
+        
+        this.data = new Data(this);
+        this.processor = new MessageProcessor(this);
         
         events().register(new PlayerPrefixedMessageListener(this));
         events().register(new PlayerStaffChatToggleListener(this));
@@ -138,31 +150,31 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         debug(getClass()).header(() -> "Disabled Plugin: " + this);
     }
     
-    private <T> T initialized(@NullOr T thing, String name)
+    private <T> T initialized(@NullOr T thing)
     {
         if (thing != null) { return thing; }
-        throw new IllegalStateException(name + " isn't initialized (plugin unloaded?)");
+        throw new IllegalStateException("Not initialized yet");
     }
     
     @Override
     public Plugin plugin() { return this; }
     
-    public Debugger debugger() { return initialized(debugger, "debugger"); }
+    public Version version() { return initialized(version); }
+    
+    public Path directory() { return initialized(pluginDirectoryPath); }
+    
+    public Path backups() { return initialized(backupsDirectoryPath); }
+    
+    public Debugger debugger() { return initialized(debugger); }
     
     public Debugger.DebugLogger debug(Class<?> clazz) { return debugger().debug(clazz); }
     
-    public Version version() { return initialized(version, "version"); }
+    public StaffChatConfig config() { return initialized(config); }
     
-    public Path directory() { return initialized(pluginDirectoryPath, "pluginDirectoryPath"); }
-    
-    public Path backups() { return initialized(backupsDirectoryPath, "backupsDirectoryPath"); }
-    
-    public StaffChatConfig config() { return initialized(config, "config"); }
-    
-    public MessagesConfig messages() { return initialized(messages, "messages"); }
+    public MessagesConfig messages() { return initialized(messages); }
     
     @Override
-    public Data data() { return initialized(data, "data"); }
+    public Data data() { return initialized(data); }
     
     @Override
     public boolean isDiscordSrvHookEnabled() { return discordSrvHook != null; }
@@ -196,37 +208,72 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
             : null;
     }
     
+    private MessageProcessor processor() { return initialized(processor); }
+    
+    @Override
+    public void submitMessageFromConsole(String message)
+    {
+        processor().processConsoleChat(message);
+    }
+    
     @Override
     public void submitMessageFromInGame(Player author, String message)
     {
-        messages().processPlayerChat(author, message);
+        processor().processPlayerChat(author, message);
     }
     
     @Override
     public void submitMessageFromDiscord(User author, Message message)
     {
-        messages().processDiscordChat(author, message);
+        processor().processDiscordChat(author, message);
+    }
+    
+    //
+    //
+    //
+    
+    private void checkExistingConfig(String fileName)
+    {
+        if (Files.isRegularFile(directory().resolve(fileName))) { existingConfigs.add(fileName); }
+    }
+    
+    private void checkExistingConfigs()
+    {
+        existingConfigs.clear();
+        checkExistingConfig(StaffChatConfig.FILE_NAME);
+        checkExistingConfig(MessagesConfig.FILE_NAME);
+    }
+    
+    private void upgradeLegacyConfig(YamlDataFile file, String fileName, List<YamlValue<?>> values)
+    {
+        file.migrateValues(values, getConfig());
+        
+        if (existingConfigs.contains(fileName))
+        {
+            file.backupThenSave(backups(), "migrated");
+        }
+        else
+        {
+            file.save();
+        }
     }
     
     private void upgradeLegacyConfig()
     {
-        Path configPath = directory().resolve("config.yml");
-        if (!Files.isRegularFile(configPath)) { return; }
+        Path legacyConfigPath = directory().resolve("config.yml");
+        if (!Files.isRegularFile(legacyConfigPath)) { return; }
         
         debug(getClass()).log("Upgrade Legacy Config", () ->
             "Found legacy config, upgrading it to new configs..."
         );
         
-        config().migrateValues(StaffChatConfig.VALUES, getConfig());
-        config().save();
-        
-        messages().migrateValues(MessagesConfig.VALUES, getConfig());
-        messages().save();
+        upgradeLegacyConfig(config(), StaffChatConfig.FILE_NAME, StaffChatConfig.VALUES);
+        upgradeLegacyConfig(messages(), MessagesConfig.FILE_NAME, MessagesConfig.VALUES);
         
         try
         {
-            FileIO.backup(configPath, backups().resolve("config.legacy.yml"));
-            Files.deleteIfExists(configPath);
+            FileIO.backup(legacyConfigPath, backups().resolve("config.legacy.yml"));
+            Files.deleteIfExists(legacyConfigPath);
         }
         catch (Exception e)
         {

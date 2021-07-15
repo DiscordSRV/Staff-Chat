@@ -52,9 +52,8 @@ public class Debugger
     public Debugger(StaffChatPlugin plugin)
     {
         this.plugin = plugin;
-        Path root = plugin.getDataFolder().toPath();
-        this.debugToggleFile = root.resolve("debugging-is-enabled");
-        this.debugLogFile = root.resolve("debug.log");
+        this.debugToggleFile = plugin.directory().resolve("debugging-is-enabled");
+        this.debugLogFile = plugin.directory().resolve("debug.log");
         this.isEnabled = isToggleFilePresent();
     }
     
