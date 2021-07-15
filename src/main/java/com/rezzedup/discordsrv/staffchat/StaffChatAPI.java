@@ -41,7 +41,7 @@ public interface StaffChatAPI
     
     void submitMessageFromConsole(String message);
     
-    void submitMessageFromInGame(Player author, String message);
+    void submitMessageFromPlayer(Player author, String message);
     
     void submitMessageFromDiscord(User author, Message message);
     

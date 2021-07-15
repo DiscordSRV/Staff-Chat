@@ -47,7 +47,7 @@ public class MessageProcessor
 {
     private final StaffChatPlugin plugin;
     
-    public MessageProcessor(StaffChatPlugin plugin)
+    MessageProcessor(StaffChatPlugin plugin)
     {
         this.plugin = plugin;
     }

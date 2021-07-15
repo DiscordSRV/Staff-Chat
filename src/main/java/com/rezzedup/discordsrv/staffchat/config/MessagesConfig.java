@@ -51,57 +51,57 @@ public class MessagesConfig extends YamlDataFile
             .defaults("&d(&5&l&oStaff&d)");
     
     public static final DefaultYamlValue<String> IN_GAME_PLAYER_FORMAT =
-        YamlValue.ofString("messages.formats.in-game.player")
+        YamlValue.ofString("messages.in-game.player")
             .migrates(Migration.move("in-game-message-format"))
             .defaults("%prefix% %name%&7:&f %message%");
     
     public static final DefaultYamlValue<String> IN_GAME_DISCORD_FORMAT =
-        YamlValue.ofString("messages.formats.in-game.discord")
+        YamlValue.ofString("messages.in-game.discord")
             .migrates(Migration.move("discord-message-format"))
             .defaults("&9&ldiscord &f-> %prefix% %name%&7:&f %message%");
     
     public static final DefaultYamlValue<String> IN_GAME_CONSOLE_FORMAT =
-        YamlValue.ofString("messages.formats.in-game.console")
+        YamlValue.ofString("messages.in-game.console")
             .defaults("%prefix% [CONSOLE]&7:&f %message%");
     
     public static final DefaultYamlValue<String> DISCORD_CONSOLE_FORMAT =
-        YamlValue.ofString("messages.formats.discord.console")
+        YamlValue.ofString("messages.discord.console")
             .defaults("**`CONSOLE:`** %message%");
     
     public static final DefaultYamlValue<String> AUTO_ENABLED_NOTIFICATION =
-        YamlValue.ofString("messages.notifications.automatic-staff-chat.enabled")
+        YamlValue.ofString("notifications.automatic-staff-chat.enabled")
             .migrates(Migration.move("enable-staff-chat"))
             .defaults("%prefix% &2->&a &nEnabled&a automatic staff chat");
     
     public static final DefaultYamlValue<String> AUTO_DISABLED_NOTIFICATION =
-        YamlValue.ofString("messages.notifications.automatic-staff-chat.disabled")
+        YamlValue.ofString("notifications.automatic-staff-chat.disabled")
             .migrates(Migration.move("disable-staff-chat"))
             .defaults("%prefix% &4->&c &nDisabled&c automatic staff chat");
     
     public static final DefaultYamlValue<String> LEFT_CHAT_NOTIFICATION_SELF =
-        YamlValue.ofString("messages.notifications.leave.self")
+        YamlValue.ofString("notifications.leave.self")
             .defaults(
                 "%prefix% &4->&c You &nleft&c the staff chat&r\n" +
                 "&8&oYou won't receive any staff chat messages"
             );
     
     public static final DefaultYamlValue<String> LEFT_CHAT_NOTIFICATION_REMINDER =
-        YamlValue.ofString("messages.notifications.leave.reminder")
+        YamlValue.ofString("notifications.leave.reminder")
             .defaults("&8&o(Reminder: you left the staff chat)");
     
     public static final DefaultYamlValue<String> LEFT_CHAT_NOTIFICATION_OTHERS =
-        YamlValue.ofString("messages.notifications.leave.others")
+        YamlValue.ofString("notifications.leave.others")
             .defaults("%prefix% &4->&c %player% &nleft&c the staff chat");
     
     public static final DefaultYamlValue<String> JOIN_CHAT_NOTIFICATION_SELF =
-        YamlValue.ofString("messages.notifications.join.self")
+        YamlValue.ofString("notifications.join.self")
             .defaults(
                 "%prefix% &2->&a You &njoined&a the staff chat&r\n" +
                 "&8&oYou will now receive staff chat messages again"
             );
     
     public static final DefaultYamlValue<String> JOIN_CHAT_NOTIFICATION_OTHERS =
-        YamlValue.ofString("messages.notifications.join.others")
+        YamlValue.ofString("notifications.join.others")
             .defaults("%prefix% &2->&a %player% &njoined&a the staff chat");
     
     @AggregatedResult
@@ -206,13 +206,15 @@ public class MessagesConfig extends YamlDataFile
         sendNotification(disabler, AUTO_DISABLED_NOTIFICATION, null);
     }
     
-    public void notifyLeaveChat(Player leaver)
+    public void notifyLeaveChat(Player leaver, boolean notifyOthers)
     {
-        sendNotification(leaver, LEFT_CHAT_NOTIFICATION_SELF, LEFT_CHAT_NOTIFICATION_OTHERS);
+        @NullOr DefaultYamlValue<String> others = (notifyOthers) ? LEFT_CHAT_NOTIFICATION_OTHERS : null;
+        sendNotification(leaver, LEFT_CHAT_NOTIFICATION_SELF, others);
     }
     
-    public void notifyJoinChat(Player joiner)
+    public void notifyJoinChat(Player joiner, boolean notifyOthers)
     {
-        sendNotification(joiner, JOIN_CHAT_NOTIFICATION_SELF, JOIN_CHAT_NOTIFICATION_OTHERS);
+        @NullOr DefaultYamlValue<String> others = (notifyOthers) ? JOIN_CHAT_NOTIFICATION_OTHERS : null;
+        sendNotification(joiner, JOIN_CHAT_NOTIFICATION_SELF, others);
     }
 }

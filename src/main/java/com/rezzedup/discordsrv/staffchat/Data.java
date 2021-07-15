@@ -51,7 +51,7 @@ public class Data extends YamlDataFile implements StaffChatData
     
     private @NullOr TaskContext<BukkitTask> task = null;
     
-    public Data(StaffChatPlugin plugin)
+    Data(StaffChatPlugin plugin)
     {
         super(plugin.directory().resolve("data"), "staff-chat.data.yml");
         this.plugin = plugin;

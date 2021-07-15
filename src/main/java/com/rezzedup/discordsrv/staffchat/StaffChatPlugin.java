@@ -86,12 +86,12 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         this.pluginDirectoryPath = getDataFolder().toPath();
         this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
         
-        checkExistingConfigs();
-        
         this.debugger = new Debugger(this);
-        
+    
         debug(getClass()).header(() -> "Starting Plugin: " + this);
         debugger().schedulePluginStatus(getClass(), "Enable");
+        
+        checkExistingConfigs();
         
         this.config = new StaffChatConfig(this);
         this.messages = new MessagesConfig(this);
@@ -217,7 +217,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     }
     
     @Override
-    public void submitMessageFromInGame(Player author, String message)
+    public void submitMessageFromPlayer(Player author, String message)
     {
         processor().processPlayerChat(author, message);
     }

@@ -35,6 +35,9 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import pl.tlinkowski.annotation.basic.NullOr;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 @SuppressWarnings("unused")
 public class PlayerStaffChatToggleListener implements Listener
 {
@@ -60,7 +63,7 @@ public class PlayerStaffChatToggleListener implements Listener
             event.setCancelled(true); // Cancel this message from getting sent to global chat.
             
             // Handle this on the main thread next tick.
-            plugin.sync().run(() -> plugin.submitMessageFromInGame(event.getPlayer(), event.getMessage()));
+            plugin.sync().run(() -> plugin.submitMessageFromPlayer(event.getPlayer(), event.getMessage()));
         }
         else
         {
@@ -82,16 +85,36 @@ public class PlayerStaffChatToggleListener implements Listener
         
         if (!plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_TOGGLE_ENABLED)) { return; }
         if (!Permissions.ACCESS.allows(player)) { return; }
-        if (!plugin.data().isAutomaticStaffChatEnabled(player)) { return; }
+    
+        Deque<Runnable> reminders = new ArrayDeque<>();
         
-        plugin.debug(getClass()).log(event, () ->
-            "Player " + event.getPlayer().getName() + " joined: " +
-            "reminding them that they have automatic staff-chat enabled"
-        );
+        if (plugin.data().isAutomaticStaffChatEnabled(player))
+        {
+            plugin.debug(getClass()).log(event, () ->
+                "Player " + event.getPlayer().getName() + " joined: " +
+                "reminding them that they have automatic staff-chat enabled"
+            );
+            
+            reminders.add(() -> plugin.messages().notifyAutoChatEnabled(player));
+        }
         
-        plugin.sync().delay(10).ticks().run(() ->
-            plugin.messages().notifyAutoChatEnabled(player)
-        );
+        if (!plugin.data().isReceivingStaffChatMessages(player))
+        {
+            plugin.debug(getClass()).log(event, () ->
+                "Player " + event.getPlayer().getName() + " joined: " +
+                "reminding them that they previously left the staff-chat"
+            );
+            
+            reminders.add(() -> plugin.messages().notifyLeaveChat(player, false));
+        }
+        
+        if (reminders.isEmpty()) { return; }
+        
+        plugin.sync().delay(10).ticks().every(10).ticks().run(task ->
+        {
+            if (reminders.isEmpty()) { task.cancel(); }
+            else { reminders.pop().run(); }
+        });
     }
     
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -124,7 +147,10 @@ public class PlayerStaffChatToggleListener implements Listener
         
         if (player == null || event.isQuiet()) { return; }
         
-        if (event.isLeavingStaffChat()) { plugin.messages().notifyLeaveChat(player); }
-        else { plugin.messages().notifyJoinChat(player); }
+        boolean broadcastToEveryone =
+            event.getProfile().sinceLeftStaffChat().isPresent() != event.isLeavingStaffChat();
+        
+        if (event.isLeavingStaffChat()) { plugin.messages().notifyLeaveChat(player, broadcastToEveryone); }
+        else { plugin.messages().notifyJoinChat(player, broadcastToEveryone); }
     }
 }

@@ -68,6 +68,6 @@ public class PlayerPrefixedMessageListener implements Listener
         event.setCancelled(true); // Cancel this message from getting sent to global chat.
         
         // Handle this on the main thread next tick.
-        plugin.sync().run(() -> plugin.submitMessageFromInGame(player, submission));
+        plugin.sync().run(() -> plugin.submitMessageFromPlayer(player, submission));
     }
 }
