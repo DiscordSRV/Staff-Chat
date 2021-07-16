@@ -33,6 +33,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.util.ArrayDeque;
@@ -54,13 +55,13 @@ public class PlayerStaffChatToggleListener implements Listener
         Player player = event.getPlayer();
         if (!plugin.data().isAutomaticStaffChatEnabled(player)) { return; }
         
+        event.setCancelled(true); // Cancel this message from getting sent to global chat.
+        
         if (Permissions.ACCESS.allows(player))
         {
             plugin.debug(getClass()).log(event, () ->
                 "Player " + player.getName() + " has automatic staff-chat enabled"
             );
-            
-            event.setCancelled(true); // Cancel this message from getting sent to global chat.
             
             // Handle this on the main thread next tick.
             plugin.sync().run(() -> plugin.submitMessageFromPlayer(event.getPlayer(), event.getMessage()));
@@ -72,12 +73,15 @@ public class PlayerStaffChatToggleListener implements Listener
                 "but they don't have permission to use the staff chat"
             );
             
-            // Remove this non-staff profile.
-            plugin.data().updateProfile(player);
+            // Remove this non-staff profile (but in sync 'cus it calls an event).
+            plugin.sync().run(() -> {
+                plugin.data().updateProfile(player);
+                player.chat(event.getMessage());
+            });
         }
     }
     
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerJoin(PlayerJoinEvent event)
     {
         Player player = event.getPlayer();
@@ -117,6 +121,13 @@ public class PlayerStaffChatToggleListener implements Listener
         });
     }
     
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerQuit(PlayerQuitEvent event)
+    {
+        // Might as well update the profile (cleanup)
+        plugin.data().updateProfile(event.getPlayer());
+    }
+    
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onToggleAutoChat(AutoStaffChatToggleEvent event)
     {
@@ -132,6 +143,28 @@ public class PlayerStaffChatToggleListener implements Listener
     
         if (event.isEnablingAutomaticChat()) { plugin.messages().notifyAutoChatEnabled(player); }
         else { plugin.messages().notifyAutoChatDisabled(player); }
+    }
+    
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onLeavingStaffChatIsDisabled(ReceivingStaffChatToggleEvent event)
+    {
+        if (event.isJoiningStaffChat()) { return; }
+        if (plugin.config().getOrDefault(StaffChatConfig.LEAVING_STAFFCHAT_ENABLED)) { return; }
+        
+        // Leaving is disabled, cancel the event.
+        event.setCancelled(true);
+        
+        @NullOr Player player = event.getProfile().toPlayer().orElse(null);
+        
+        plugin.debug(getClass()).log(event, () -> {
+            String name = (player == null) ? "<Offline>" : player.getName();
+            return "Player: " + name + " (" + event.getProfile().uuid() + ") " +
+                   "tried to leave the staff chat, but leaving is disabled in the config";
+        });
+        
+        if (player == null || event.isQuiet()) { return; }
+        
+        plugin.messages().notifyLeavingChatIsDisabled(player);
     }
     
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

@@ -140,7 +140,6 @@ public class ToggleStaffChatCommand implements CommandExecutor, TabCompleter
         @NullOr Player player = onlyIfPlayer(sender);
         if (player == null) { return true; }
         
-        // TODO: don't let staff leave if disabled
         plugin.data().getOrCreateProfile(player).receivesStaffChatMessages(false);
         return true;
     }

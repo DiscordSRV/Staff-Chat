@@ -43,7 +43,7 @@ import static com.rezzedup.discordsrv.staffchat.util.Strings.colorful;
 
 public class ManageStaffChatCommand implements CommandExecutor, TabCompleter
 {
-    private static final Set<String> RELOAD_ALIASES = Set.of("reload", "refresh", "restart");
+    private static final Set<String> RELOAD_ALIASES = Set.of("reload");
     private static final Set<String> DEBUG_ALIASES = Set.of("debug");
     private static final Set<String> HELP_ALIASES = Set.of("help", "usage", "?");
     

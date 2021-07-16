@@ -42,8 +42,6 @@ import java.util.function.Predicate;
 
 public class MessagesConfig extends YamlDataFile
 {
-    public static final String FILE_NAME = "messages.config.yml";
-    
     public static final YamlValue<Version> VERSION =
         YamlValue.of("meta.config-version", Configs.VERSION).maybe();
     
@@ -56,58 +54,65 @@ public class MessagesConfig extends YamlDataFile
             .example("Define your own placeholders here!");
     
     public static final DefaultYamlValue<String> IN_GAME_PLAYER_FORMAT =
-        YamlValue.ofString("messages.in-game.player")
+        YamlValue.ofString("messages.in-game-formats.player")
             .migrates(Migration.move("in-game-message-format"))
             .defaults("%prefix% %name%&7:&f %message%");
     
     public static final DefaultYamlValue<String> IN_GAME_DISCORD_FORMAT =
-        YamlValue.ofString("messages.in-game.discord")
+        YamlValue.ofString("messages.in-game-formats.discord")
             .migrates(Migration.move("discord-message-format"))
-            .defaults("&9&ldiscord &f-> %prefix% %name%&7:&f %message%");
+            .defaults("&9&ldiscord &f→ %prefix% %name%&7:&f %message%");
     
     public static final DefaultYamlValue<String> IN_GAME_CONSOLE_FORMAT =
-        YamlValue.ofString("messages.in-game.console")
+        YamlValue.ofString("messages.in-game-formats.console")
             .defaults("%prefix% [CONSOLE]&7:&f %message%");
     
     public static final DefaultYamlValue<String> DISCORD_CONSOLE_FORMAT =
-        YamlValue.ofString("messages.discord.console")
+        YamlValue.ofString("messages.discord-formats.console")
             .defaults("**`CONSOLE:`** %message%");
     
     public static final DefaultYamlValue<String> AUTO_ENABLED_NOTIFICATION =
         YamlValue.ofString("notifications.automatic-staff-chat.enabled")
             .migrates(Migration.move("enable-staff-chat"))
-            .defaults("%prefix% &2->&a &nEnabled&a automatic staff chat");
+            .defaults("%prefix% &2→&a &nEnabled&a automatic staff chat");
     
     public static final DefaultYamlValue<String> AUTO_DISABLED_NOTIFICATION =
         YamlValue.ofString("notifications.automatic-staff-chat.disabled")
             .migrates(Migration.move("disable-staff-chat"))
-            .defaults("%prefix% &4->&c &nDisabled&c automatic staff chat");
+            .defaults("%prefix% &4→&c &nDisabled&c automatic staff chat");
     
     public static final DefaultYamlValue<String> LEFT_CHAT_NOTIFICATION_SELF =
         YamlValue.ofString("notifications.leave.self")
             .defaults(
-                "%prefix% &4->&c You &nleft&c the staff chat&r\n" +
+                "%prefix% &4→&c You &nleft&c the staff chat&r\n" +
                 "&8&oYou won't receive any staff chat messages"
             );
+    
+    public static final DefaultYamlValue<String> LEFT_CHAT_NOTIFICATION_OTHERS =
+        YamlValue.ofString("notifications.leave.others")
+            .defaults("%prefix% &4→&c %player% &nleft&c the staff chat");
     
     public static final DefaultYamlValue<String> LEFT_CHAT_NOTIFICATION_REMINDER =
         YamlValue.ofString("notifications.leave.reminder")
             .defaults("&8&o(Reminder: you left the staff chat)");
     
-    public static final DefaultYamlValue<String> LEFT_CHAT_NOTIFICATION_OTHERS =
-        YamlValue.ofString("notifications.leave.others")
-            .defaults("%prefix% &4->&c %player% &nleft&c the staff chat");
+    public static final DefaultYamlValue<String> LEFT_CHAT_DISABLED_ERROR =
+        YamlValue.ofString("notifications.leave.disabled")
+            .defaults(
+                "%prefix% &6→&e You cannot leave the staff chat\n" +
+                "&8&oLeaving the staff chat is currently disabled"
+            );
     
     public static final DefaultYamlValue<String> JOIN_CHAT_NOTIFICATION_SELF =
         YamlValue.ofString("notifications.join.self")
             .defaults(
-                "%prefix% &2->&a You &njoined&a the staff chat&r\n" +
+                "%prefix% &2→&a You &njoined&a the staff chat&r\n" +
                 "&8&oYou will now receive staff chat messages again"
             );
     
     public static final DefaultYamlValue<String> JOIN_CHAT_NOTIFICATION_OTHERS =
         YamlValue.ofString("notifications.join.others")
-            .defaults("%prefix% &2->&a %player% &njoined&a the staff chat");
+            .defaults("%prefix% &2→&a %player% &njoined&a the staff chat");
     
     @AggregatedResult
     public static final List<YamlValue<?>> VALUES = Aggregates.list(MessagesConfig.class, YamlValue.type());
@@ -118,7 +123,7 @@ public class MessagesConfig extends YamlDataFile
     
     public MessagesConfig(StaffChatPlugin plugin)
     {
-        super(plugin.directory(), FILE_NAME);
+        super(plugin.directory(), "messages.config.yml");
         this.plugin = plugin;
         
         reloadsWith(() ->
@@ -215,6 +220,11 @@ public class MessagesConfig extends YamlDataFile
     {
         @NullOr DefaultYamlValue<String> others = (notifyOthers) ? LEFT_CHAT_NOTIFICATION_OTHERS : null;
         sendNotification(leaver, LEFT_CHAT_NOTIFICATION_SELF, others);
+    }
+    
+    public void notifyLeavingChatIsDisabled(Player leaver)
+    {
+        sendNotification(leaver, LEFT_CHAT_DISABLED_ERROR, null);
     }
     
     public void notifyJoinChat(Player joiner, boolean notifyOthers)

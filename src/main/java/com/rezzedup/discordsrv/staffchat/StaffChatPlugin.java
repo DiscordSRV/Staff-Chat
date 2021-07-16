@@ -135,7 +135,9 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         data().end();
         
         // Display toggle message so that auto staff-chat users are aware that their chat is public again.
-        //getServer().getOnlinePlayers().stream().filter(data()::isChatAutomatic).forEach(data()::toggleAutoChat);
+        onlineStaffChatParticipants()
+            .filter(data()::isAutomaticStaffChatEnabled)
+            .forEach(messages()::notifyAutoChatDisabled);
         
         if (isDiscordSrvHookEnabled())
         {
@@ -230,7 +232,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     //
     //
     
-    private void upgradeLegacyConfig(YamlDataFile file, String fileName, List<YamlValue<?>> values)
+    private void upgradeLegacyConfig(YamlDataFile file, List<YamlValue<?>> values)
     {
         file.migrateValues(values, getConfig());
         
@@ -247,8 +249,8 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
             "Found legacy config, upgrading it to new configs..."
         );
         
-        upgradeLegacyConfig(config(), StaffChatConfig.FILE_NAME, StaffChatConfig.VALUES);
-        upgradeLegacyConfig(messages(), MessagesConfig.FILE_NAME, MessagesConfig.VALUES);
+        upgradeLegacyConfig(config(), StaffChatConfig.VALUES);
+        upgradeLegacyConfig(messages(), MessagesConfig.VALUES);
         
         try
         {

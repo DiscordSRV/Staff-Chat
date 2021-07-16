@@ -40,7 +40,11 @@ public interface StaffChatData
     
     default Optional<StaffChatProfile> getProfile(Player player)
     {
-        return getProfile(player.getUniqueId());
+        // If they're a staff member, then they will always have a profile
+        // otherwise, return the possibly existing profile for non-staff
+        return (Permissions.ACCESS.allows(player))
+            ? Optional.of(getOrCreateProfile(player.getUniqueId()))
+            : getProfile(player.getUniqueId());
     }
     
     default boolean isAutomaticStaffChatEnabled(Player player)

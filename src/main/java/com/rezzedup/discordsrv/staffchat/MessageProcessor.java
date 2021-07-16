@@ -72,9 +72,10 @@ public class MessageProcessor
         if (author instanceof Player)
         {
             Player player = (Player) author;
+            StaffChatProfile profile = plugin.data().getOrCreateProfile(player);
             
             // Author left the staff chat but is sending a message there...
-            if (!plugin.data().isReceivingStaffChatMessages(player))
+            if (!profile.receivesStaffChatMessages())
             {
                 String reminder = Strings.colorful(placeholders.update(
                     plugin.messages().getOrDefault(MessagesConfig.LEFT_CHAT_NOTIFICATION_REMINDER))

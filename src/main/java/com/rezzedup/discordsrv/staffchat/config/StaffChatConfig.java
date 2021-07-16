@@ -37,8 +37,6 @@ import java.util.List;
 
 public class StaffChatConfig extends YamlDataFile
 {
-    public static final String FILE_NAME = "staff-chat.config.yml";
-    
     public static final YamlValue<Version> VERSION =
         YamlValue.of("meta.config-version", Configs.VERSION).maybe();
     
@@ -107,7 +105,7 @@ public class StaffChatConfig extends YamlDataFile
     
     public StaffChatConfig(StaffChatPlugin plugin)
     {
-        super(plugin.directory(), FILE_NAME);
+        super(plugin.directory(), "staff-chat.config.yml");
         
         reloadsWith(() ->
         {
