@@ -23,45 +23,48 @@
 package com.rezzedup.discordsrv.staffchat.util;
 
 import net.md_5.bungee.api.ChatColor;
-import org.bukkit.configuration.ConfigurationSection;
 import pl.tlinkowski.annotation.basic.NullOr;
 
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Strings
 {
     private Strings() {}
     
-    public static boolean isEmptyOrNull(@NullOr String text) { return text == null || text.isEmpty(); }
-    
-    public static String requireNonEmpty(@NullOr String text, String message)
-    {
-        if (text == null) { throw new NullPointerException(message); }
-        if (text.isEmpty()) { throw new IllegalArgumentException(message); }
-        return text;
-    }
-    
-    public static String orEmpty(@NullOr String text) { return (isEmptyOrNull(text)) ? "" : text; }
-    
-    public static String orEmpty(ConfigurationSection config, String key)
-    {
-        return orEmpty(config.getString(key));
-    }
-    
-    public static @NullOr String valueOfOrNull(@NullOr Object object)
-    {
-        return (object == null) ? null : String.valueOf(object);
-    }
+    private static final Pattern HASH_HEX_COLOR_PATTERN = Pattern.compile("(?i)&x?#(?<hex>[a-f0-9]{6})");
     
     public static String colorful(@NullOr String text)
     {
-        return ChatColor.translateAlternateColorCodes('&', orEmpty(text));
+        if (isEmptyOrNull(text)) { return ""; }
+    
+        Matcher matcher = HASH_HEX_COLOR_PATTERN.matcher(text);
+        @NullOr Set<String> replaced = null;
+        
+        while (matcher.find())
+        {
+            if (replaced == null) { replaced = new HashSet<>(); }
+            
+            String match = matcher.group();
+            if (replaced.contains(match)) { continue; }
+            
+            StringBuilder bungeeHexFormat = new StringBuilder("&x");
+            
+            for (char c : matcher.group("hex").toCharArray())
+            {
+                bungeeHexFormat.append('&').append(c);
+            }
+            
+            text = text.replace(match, bungeeHexFormat.toString());
+            replaced.add(match);
+        }
+        
+        return ChatColor.translateAlternateColorCodes('&', text);
     }
     
-    public static String colorful(ConfigurationSection config, String key)
-    {
-        @NullOr String text = config.getString(key);
-        if (text == null) { return colorful("&r" + key + " &c&o(&nmissing&c&o config value)"); }
-        return colorful(text);
-    }
+    public static boolean isEmptyOrNull(@NullOr String text) { return text == null || text.isEmpty(); }
+    
+    public static String orEmpty(@NullOr String text) { return (isEmptyOrNull(text)) ? "" : text; }
 }

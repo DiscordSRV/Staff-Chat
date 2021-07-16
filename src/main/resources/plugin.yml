@@ -16,6 +16,7 @@ commands:
       /<command> - toggle automatic staff chat
       /<command> <message> - send a message to the staff chat
   togglestaffchat:
+    aliases: [toggleadminchat]
     description: Enable/disable receiving staff chat messages.
     permission: staffchat.access
     usage: |-
@@ -23,6 +24,16 @@ commands:
       /<command> on - receive staff chat messages
       /<command> off - stop receiving staff chat messages
       /<command> check [<player>] - check if someone can receive messages
+  leavestaffchat:
+    aliases: [leaveadminchat]
+    description: Leave the staff chat (stop receiving messages).
+    permission: staffchat.access
+    usage: /<command>
+  joinstaffchat:
+    aliases: [joinadminchat]
+    description: Rejoin the staff chat (receive messages again).
+    permission: staffchat.access
+    usage: /<command>
   managestaffchat:
     aliases: [discordstaffchat, discordadminchat, manageadminchat]
     description: Manage and get information about DiscordSRV-Staff-Chat

@@ -53,9 +53,7 @@ import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, EventSource, StaffChatAPI
 {
@@ -65,8 +63,6 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     public static final String CHANNEL = "staff-chat";
     
     public static final String DISCORDSRV = "DiscordSRV";
-    
-    private final Set<String> existingConfigs = new HashSet<>();
     
     private @NullOr Version version;
     private @NullOr Path pluginDirectoryPath;
@@ -87,11 +83,9 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
         
         this.debugger = new Debugger(this);
-    
+        
         debug(getClass()).header(() -> "Starting Plugin: " + this);
         debugger().schedulePluginStatus(getClass(), "Enable");
-        
-        checkExistingConfigs();
         
         this.config = new StaffChatConfig(this);
         this.messages = new MessagesConfig(this);
@@ -104,9 +98,13 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         events().register(new PlayerPrefixedMessageListener(this));
         events().register(new PlayerStaffChatToggleListener(this));
         
+        ToggleStaffChatCommand toggle = new ToggleStaffChatCommand(this);
+    
         command("staffchat", new StaffChatCommand(this));
-        command("togglestaffchat", new ToggleStaffChatCommand(this));
         command("managestaffchat", new ManageStaffChatCommand(this));
+        command("togglestaffchat", toggle);
+        command("leavestaffchat", toggle.getLeaveShortcut());
+        command("joinstaffchat", toggle.getJoinShortcut());
         
         @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
         
@@ -232,30 +230,12 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     //
     //
     
-    private void checkExistingConfig(String fileName)
-    {
-        if (Files.isRegularFile(directory().resolve(fileName))) { existingConfigs.add(fileName); }
-    }
-    
-    private void checkExistingConfigs()
-    {
-        existingConfigs.clear();
-        checkExistingConfig(StaffChatConfig.FILE_NAME);
-        checkExistingConfig(MessagesConfig.FILE_NAME);
-    }
-    
     private void upgradeLegacyConfig(YamlDataFile file, String fileName, List<YamlValue<?>> values)
     {
         file.migrateValues(values, getConfig());
         
-        if (existingConfigs.contains(fileName))
-        {
-            file.backupThenSave(backups(), "migrated");
-        }
-        else
-        {
-            file.save();
-        }
+        if (file.isNewlyCreated()) { file.save(); }
+        else { file.backupThenSave(backups(), "migrated"); }
     }
     
     private void upgradeLegacyConfig()

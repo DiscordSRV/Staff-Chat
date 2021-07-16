@@ -58,8 +58,19 @@ public class ToggleStaffChatCommand implements CommandExecutor, TabCompleter
         );
     
     private final StaffChatPlugin plugin;
+    private final CommandExecutor leaveShortcut;
+    private final CommandExecutor joinShortcut;
     
-    public ToggleStaffChatCommand(StaffChatPlugin plugin) { this.plugin = plugin; }
+    public ToggleStaffChatCommand(StaffChatPlugin plugin)
+    {
+        this.plugin = plugin;
+        this.leaveShortcut = (sender, command, label, args) -> off(sender);
+        this.joinShortcut = (sender, command, label, args) -> on(sender);
+    }
+    
+    public CommandExecutor getLeaveShortcut() { return leaveShortcut; }
+    
+    public CommandExecutor getJoinShortcut() { return joinShortcut; }
     
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
@@ -68,8 +79,8 @@ public class ToggleStaffChatCommand implements CommandExecutor, TabCompleter
         
         if (option == null || HELP_ALIASES.contains(option)) { usage(sender, label); }
         else if (TOGGLE_AUTO_ALIASES.contains(option)) { auto(sender); }
-        else if (TOGGLE_ON_ALIASES.contains(option)) { on(sender); }
         else if (TOGGLE_OFF_ALIASES.contains(option)) { off(sender); }
+        else if (TOGGLE_ON_ALIASES.contains(option)) { on(sender); }
         else if (CHECK_ALIASES.contains(option)) { check(sender, args); }
         else
         {
@@ -124,21 +135,23 @@ public class ToggleStaffChatCommand implements CommandExecutor, TabCompleter
         plugin.data().getOrCreateProfile(player).toggleAutomaticStaffChat();
     }
     
-    private void on(CommandSender sender)
+    private boolean off(CommandSender sender)
     {
         @NullOr Player player = onlyIfPlayer(sender);
-        if (player == null) { return; }
+        if (player == null) { return true; }
         
-        // TODO:
-        plugin.data().getOrCreateProfile(player).receivesStaffChatMessages(true);
+        // TODO: don't let staff leave if disabled
+        plugin.data().getOrCreateProfile(player).receivesStaffChatMessages(false);
+        return true;
     }
     
-    private void off(CommandSender sender)
+    private boolean on(CommandSender sender)
     {
         @NullOr Player player = onlyIfPlayer(sender);
-        if (player == null) { return; }
+        if (player == null) { return true; }
         
-        plugin.data().getOrCreateProfile(player).receivesStaffChatMessages(false);
+        plugin.data().getOrCreateProfile(player).receivesStaffChatMessages(true);
+        return true;
     }
     
     private void check(CommandSender sender, String[] args)

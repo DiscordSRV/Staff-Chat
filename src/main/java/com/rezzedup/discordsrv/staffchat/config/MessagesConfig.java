@@ -29,6 +29,7 @@ import com.rezzedup.discordsrv.staffchat.util.Strings;
 import com.rezzedup.util.constants.Aggregates;
 import com.rezzedup.util.constants.annotations.AggregatedResult;
 import community.leaf.configvalues.bukkit.DefaultYamlValue;
+import community.leaf.configvalues.bukkit.ExampleYamlValue;
 import community.leaf.configvalues.bukkit.YamlValue;
 import community.leaf.configvalues.bukkit.data.YamlDataFile;
 import community.leaf.configvalues.bukkit.migrations.Migration;
@@ -49,6 +50,10 @@ public class MessagesConfig extends YamlDataFile
     public static final DefaultYamlValue<String> PREFIX =
         YamlValue.ofString("placeholders.prefix")
             .defaults("&d(&5&l&oStaff&d)");
+    
+    public static final ExampleYamlValue<String> EXAMPLE_PLACEHOLDER =
+        YamlValue.ofString("placeholders.example")
+            .example("Define your own placeholders here!");
     
     public static final DefaultYamlValue<String> IN_GAME_PLAYER_FORMAT =
         YamlValue.ofString("messages.in-game.player")
