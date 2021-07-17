@@ -24,6 +24,7 @@ package com.rezzedup.discordsrv.staffchat.config;
 
 import com.github.zafarkhaja.semver.Version;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
+import com.rezzedup.discordsrv.staffchat.Updater;
 import com.rezzedup.discordsrv.staffchat.util.MappedPlaceholder;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
 import com.rezzedup.util.constants.Aggregates;
@@ -186,12 +187,16 @@ public class MessagesConfig extends YamlDataFile
         return placeholders;
     }
     
+    private void sendNotification(Player player, String message)
+    {
+        player.sendMessage(message);
+        plugin.config().playNotificationSound(player);
+    }
+    
     private void sendNotification(Player player, DefaultYamlValue<String> self, @NullOr DefaultYamlValue<String> others)
     {
         MappedPlaceholder placeholders = placeholders(player);
-        
-        player.sendMessage(Strings.colorful(placeholders.update(getOrDefault(self))));
-        plugin.config().playNotificationSound(player);
+        sendNotification(player, Strings.colorful(placeholders.update(getOrDefault(self))));
         
         if (others == null) { return; }
         
@@ -200,10 +205,7 @@ public class MessagesConfig extends YamlDataFile
         
         plugin.onlineStaffChatParticipants()
             .filter(Predicate.not(player::equals))
-            .forEach(staff -> {
-                staff.sendMessage(notification);
-                plugin.config().playNotificationSound(staff);
-            });
+            .forEach(staff -> sendNotification(staff, notification));
     }
     
     public void notifyAutoChatEnabled(Player enabler)
@@ -231,5 +233,17 @@ public class MessagesConfig extends YamlDataFile
     {
         @NullOr DefaultYamlValue<String> others = (notifyOthers) ? JOIN_CHAT_NOTIFICATION_OTHERS : null;
         sendNotification(joiner, JOIN_CHAT_NOTIFICATION_SELF, others);
+    }
+    
+    //
+    //  Unconfigurable notifications
+    //
+    
+    public void notifyUpdateAvailable(Player manager, Version version)
+    {
+        sendNotification(manager, Strings.colorful(
+            "&9DiscordSRV-&lStaff&9-&lChat&6 →&e Update available: &f" +
+            version + " &6&o(" + plugin.version() + ")&r\n" + "&9&o&n" + Updater.RESOURCE_PAGE
+        ));
     }
 }

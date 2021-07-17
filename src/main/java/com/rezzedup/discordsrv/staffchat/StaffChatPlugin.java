@@ -30,6 +30,7 @@ import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordStaffChatListener;
+import com.rezzedup.discordsrv.staffchat.listeners.JoinNotificationListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerPrefixedMessageListener;
 import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener;
 import com.rezzedup.discordsrv.staffchat.util.FileIO;
@@ -71,6 +72,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     private @NullOr StaffChatConfig config;
     private @NullOr MessagesConfig messages;
     private @NullOr Data data;
+    private @NullOr Updater updater;
     private @NullOr MessageProcessor processor;
     private @NullOr DiscordStaffChatListener discordSrvHook;
     
@@ -93,8 +95,10 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         upgradeLegacyConfig();
         
         this.data = new Data(this);
+        this.updater = new Updater(this);
         this.processor = new MessageProcessor(this);
         
+        events().register(new JoinNotificationListener(this));
         events().register(new PlayerPrefixedMessageListener(this));
         events().register(new PlayerStaffChatToggleListener(this));
         
@@ -133,6 +137,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         debug(getClass()).log("Disable", () -> "Disabling plugin...");
         
         data().end();
+        updater().end();
         
         // Display toggle message so that auto staff-chat users are aware that their chat is public again.
         onlineStaffChatParticipants()
@@ -175,6 +180,8 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
     
     @Override
     public Data data() { return initialized(data); }
+    
+    public Updater updater() { return initialized(updater); }
     
     @Override
     public boolean isDiscordSrvHookEnabled() { return discordSrvHook != null; }

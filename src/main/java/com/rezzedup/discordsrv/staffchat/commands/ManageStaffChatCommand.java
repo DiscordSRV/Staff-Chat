@@ -122,6 +122,7 @@ public class ManageStaffChatCommand implements CommandExecutor, TabCompleter
         plugin.config().reload();
         plugin.messages().reload();
         plugin.data().reload();
+        plugin.updater().reload();
         
         sender.sendMessage(colorful("&9&lDiscordSRV-Staff-Chat&f: Reloaded."));
     }

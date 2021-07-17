@@ -32,12 +32,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import pl.tlinkowski.annotation.basic.NullOr;
-
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 @SuppressWarnings("unused")
 public class PlayerStaffChatToggleListener implements Listener
@@ -79,53 +74,6 @@ public class PlayerStaffChatToggleListener implements Listener
                 player.chat(event.getMessage());
             });
         }
-    }
-    
-    @EventHandler(priority = EventPriority.LOW)
-    public void onPlayerJoin(PlayerJoinEvent event)
-    {
-        Player player = event.getPlayer();
-        plugin.data().updateProfile(player);
-        
-        if (!plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_TOGGLE_ENABLED)) { return; }
-        if (!Permissions.ACCESS.allows(player)) { return; }
-    
-        Deque<Runnable> reminders = new ArrayDeque<>();
-        
-        if (plugin.data().isAutomaticStaffChatEnabled(player))
-        {
-            plugin.debug(getClass()).log(event, () ->
-                "Player " + event.getPlayer().getName() + " joined: " +
-                "reminding them that they have automatic staff-chat enabled"
-            );
-            
-            reminders.add(() -> plugin.messages().notifyAutoChatEnabled(player));
-        }
-        
-        if (!plugin.data().isReceivingStaffChatMessages(player))
-        {
-            plugin.debug(getClass()).log(event, () ->
-                "Player " + event.getPlayer().getName() + " joined: " +
-                "reminding them that they previously left the staff-chat"
-            );
-            
-            reminders.add(() -> plugin.messages().notifyLeaveChat(player, false));
-        }
-        
-        if (reminders.isEmpty()) { return; }
-        
-        plugin.sync().delay(10).ticks().every(10).ticks().run(task ->
-        {
-            if (reminders.isEmpty()) { task.cancel(); }
-            else { reminders.pop().run(); }
-        });
-    }
-    
-    @EventHandler(priority = EventPriority.LOW)
-    public void onPlayerQuit(PlayerQuitEvent event)
-    {
-        // Might as well update the profile (cleanup)
-        plugin.data().updateProfile(event.getPlayer());
     }
     
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

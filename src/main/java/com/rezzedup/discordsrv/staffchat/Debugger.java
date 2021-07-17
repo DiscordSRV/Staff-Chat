@@ -171,6 +171,14 @@ public class Debugger
             recordDebugLogEntry(() -> "---------- " + message.get() + " ----------");
         }
         
+        default void logException(Object context, Throwable exception)
+        {
+            log(context, () -> {
+                exception.printStackTrace();
+                return handleException(exception);
+            });
+        }
+        
         default <T extends Throwable> T failure(T exception) throws T
         {
             log(() -> handleException(exception));
