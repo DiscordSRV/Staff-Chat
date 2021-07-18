@@ -103,16 +103,20 @@ public class ManageStaffChatCommand implements CommandExecutor, TabCompleter
     private void usage(CommandSender sender, String label)
     {
         sender.sendMessage(colorful(
-            "&9&lDiscordSRV-Staff-Chat &fv" + plugin.getDescription().getVersion() + " Usage:"
+            "&9DiscordSRV-&lStaff&9-&lChat &fv" + plugin.getDescription().getVersion() + " Usage:"
         ));
         
         sender.sendMessage(colorful("&f- &7/staffchat &9Toggle automatic staff chat"));
         sender.sendMessage(colorful("&f- &7/staffchat <message> &9Send a message to staff chat"));
-        sender.sendMessage(colorful("&f- &7/" + label.toLowerCase() + " reload &9Reload the config"));
+        sender.sendMessage(colorful("&f- &7/leavestaffchat &9Leave the staff chat"));
+        sender.sendMessage(colorful("&f- &7/joinstaffchat &9Rejoin the staff chat"));
+        sender.sendMessage(colorful("&f- &7/" + label.toLowerCase() + " reload &9Reload configs"));
         sender.sendMessage(colorful("&f- &7/" + label.toLowerCase() + " debug &9Toggle debugging"));
         
-        if (plugin.debugger().isEnabled()) { sender.sendMessage(colorful("&aDebugging is currently enabled.")); }
-        else { sender.sendMessage(colorful("&cDebugging is currently disabled.")); }
+        if (plugin.debugger().isEnabled()) { sender.sendMessage(colorful("&2→ &aDebugging is currently enabled")); }
+        else { sender.sendMessage(colorful("&7→ &8Debugging is currently disabled")); }
+        
+        plugin.updater().notifyIfUpdateAvailable(sender);
     }
     
     private void reload(CommandSender sender)
@@ -135,11 +139,11 @@ public class ManageStaffChatCommand implements CommandExecutor, TabCompleter
         if (enabled)
         {
             plugin.debugger().schedulePluginStatus(getClass(), "Debug Toggle");
-            sender.sendMessage(colorful("&aEnabled debugging."));
+            sender.sendMessage(colorful("&9[Debug] &2→ &aEnabled debugging"));
             
             if (sender instanceof Player)
             {
-                sender.sendMessage("[Debug] Sending a test message...");
+                sender.sendMessage(colorful("&9[Debug]&o Sending a test message..."));
                 plugin.sync().delay(10).ticks().run(() ->
                     plugin.getServer().dispatchCommand(sender, "staffchat Hello! Just testing things...")
                 );
@@ -147,7 +151,7 @@ public class ManageStaffChatCommand implements CommandExecutor, TabCompleter
         }
         else
         {
-            sender.sendMessage(colorful("&cDisabled debugging."));
+            sender.sendMessage(colorful("&9[Debug] &4→ &cDisabled debugging"));
         }
     }
 }

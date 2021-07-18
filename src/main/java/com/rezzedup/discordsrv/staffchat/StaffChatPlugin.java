@@ -103,12 +103,11 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Eve
         events().register(new PlayerStaffChatToggleListener(this));
         
         ToggleStaffChatCommand toggle = new ToggleStaffChatCommand(this);
-    
+        
         command("staffchat", new StaffChatCommand(this));
         command("managestaffchat", new ManageStaffChatCommand(this));
-        command("togglestaffchat", toggle);
-        command("leavestaffchat", toggle.getLeaveShortcut());
-        command("joinstaffchat", toggle.getJoinShortcut());
+        command("leavestaffchat", toggle);
+        command("joinstaffchat", toggle);
         
         @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
         

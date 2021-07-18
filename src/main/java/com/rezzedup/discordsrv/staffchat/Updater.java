@@ -28,6 +28,9 @@ import com.google.gson.JsonParser;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import community.leaf.tasks.TaskContext;
 import net.md_5.bungee.api.ChatColor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import pl.tlinkowski.annotation.basic.NullOr;
 
@@ -127,14 +130,13 @@ public class Updater
             }
             
             JsonObject json = new JsonParser().parse(response.body()).getAsJsonObject();
-            Version version = Version.valueOf(json.get("name").getAsString());
+            this.latestAvailableVersion = Version.valueOf(json.get("name").getAsString());
             
             plugin.debug(getClass()).log("Update Check: Success", () ->
-                "Found latest available version: " + version
+                "Found latest available version: " + latestAvailableVersion + " (current: " + plugin.version() + ")"
             );
             
-            this.latestAvailableVersion = version;
-            plugin.sync().run(this::notifyConsoleIfUpdateAvailable);
+            plugin.sync().run(() -> notifyIfUpdateAvailable(plugin.getServer().getConsoleSender()));
         }
         catch (Exception e)
         {
@@ -144,17 +146,21 @@ public class Updater
     
     private void print(String text) { plugin.getLogger().info(ChatColor.BLUE + text); }
     
-    private void notifyConsoleIfUpdateAvailable()
+    public void notifyIfUpdateAvailable(CommandSender sender)
     {
-        latestUpdateVersion().ifPresent(version -> {
-            plugin.debug(getClass()).log("Update Available", () ->
-                "Notifying console that an update is available: " + version
-            );
-    
-            print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
-            print("An update is available: " + version + " (current: " + plugin.version() + ")");
-            print("Get the update @ " + RESOURCE_PAGE);
-            print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
+        latestUpdateVersion().ifPresent(version ->
+        {
+            if (sender instanceof Player)
+            {
+                plugin.messages().notifyUpdateAvailable((Player) sender, version);
+            }
+            else if (sender instanceof ConsoleCommandSender)
+            {
+                print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
+                print("An update is available: " + version + " (current: " + plugin.version() + ")");
+                print("Get the update @ " + RESOURCE_PAGE);
+                print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
+            }
         });
     }
 }

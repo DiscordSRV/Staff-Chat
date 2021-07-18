@@ -15,15 +15,6 @@ commands:
     usage: |-
       /<command> - toggle automatic staff chat
       /<command> <message> - send a message to the staff chat
-  togglestaffchat:
-    aliases: [toggleadminchat]
-    description: Enable/disable receiving staff chat messages.
-    permission: staffchat.access
-    usage: |-
-      /<command> auto - toggle automatic staff chat
-      /<command> on - receive staff chat messages
-      /<command> off - stop receiving staff chat messages
-      /<command> check [<player>] - check if someone can receive messages
   leavestaffchat:
     aliases: [leaveadminchat]
     description: Leave the staff chat (stop receiving messages).
