@@ -75,30 +75,30 @@ public class StaffChatConfig extends YamlDataFile
     // Message Sound
     
     public static final DefaultYamlValue<Boolean> MESSAGE_SOUND_ENABLED =
-        YamlValue.ofBoolean("staff-chat.sounds.messages.enabled").defaults(true);
+        YamlValue.ofBoolean("sounds.messages.enabled").defaults(true);
     
     public static final DefaultYamlValue<Sound> MESSAGE_SOUND_NAME =
-        YamlValue.ofSound("staff-chat.sounds.messages.name").defaults(Sound.ENTITY_ITEM_PICKUP);
+        YamlValue.ofSound("sounds.messages.name").defaults(Sound.ENTITY_ITEM_PICKUP);
     
     public static final DefaultYamlValue<Float> MESSAGE_SOUND_VOLUME =
-        YamlValue.ofFloat("staff-chat.sounds.messages.volume").defaults(1.0F);
+        YamlValue.ofFloat("sounds.messages.volume").defaults(1.0F);
     
     public static final DefaultYamlValue<Float> MESSAGE_SOUND_PITCH =
-        YamlValue.ofFloat("staff-chat.sounds.messages.pitch").defaults(0.5F);
+        YamlValue.ofFloat("sounds.messages.pitch").defaults(0.5F);
     
     // Notification Sound
     
     public static final DefaultYamlValue<Boolean> NOTIFICATION_SOUND_ENABLED =
-        YamlValue.ofBoolean("staff-chat.sounds.notifications.enabled").defaults(true);
+        YamlValue.ofBoolean("sounds.notifications.enabled").defaults(true);
     
     public static final DefaultYamlValue<Sound> NOTIFICATION_SOUND_NAME =
-        YamlValue.ofSound("staff-chat.sounds.notifications.name").defaults(Sound.ENTITY_ITEM_PICKUP);
+        YamlValue.ofSound("sounds.notifications.name").defaults(Sound.ENTITY_ITEM_PICKUP);
     
     public static final DefaultYamlValue<Float> NOTIFICATION_SOUND_VOLUME =
-        YamlValue.ofFloat("staff-chat.sounds.notifications.volume").defaults(1.0F);
+        YamlValue.ofFloat("sounds.notifications.volume").defaults(1.0F);
     
     public static final DefaultYamlValue<Float> NOTIFICATION_SOUND_PITCH =
-        YamlValue.ofFloat("staff-chat.sounds.notifications.pitch").defaults(0.75F);
+        YamlValue.ofFloat("sounds.notifications.pitch").defaults(0.75F);
     
     @AggregatedResult
     public static final List<YamlValue<?>> VALUES = Aggregates.list(StaffChatConfig.class, YamlValue.type());

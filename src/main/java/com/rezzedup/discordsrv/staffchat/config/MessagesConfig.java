@@ -144,6 +144,7 @@ public class MessagesConfig extends YamlDataFile
                 set(VERSION, plugin.version());
             }
             
+            headerFromResource("messages.config.header.txt");
             defaultValues(VALUES);
             
             if (isUpdated())
