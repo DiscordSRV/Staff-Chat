@@ -1,0 +1,43 @@
+
+   ${project.name} v${project.version} by RezzedUp
+
+   ---
+
+   This plugin *requires* DiscordSRV in order to access Discord.
+   However, it will work just fine in-game regardless if DiscordSRV is installed or not.
+
+   ---
+
+   Installation (Discord Setup):
+
+   - 1) Install this plugin and DiscordSRV
+        Get DiscordSRV here: https://www.spigotmc.org/resources/discordsrv.18494/
+
+   - 2) Add a "staff-chat" channel to DiscordSRV's config
+        (in: /plugins/DiscordSRV/config.yml)
+
+     EXAMPLE:
+     EXAMPLE:    # Channel links from game to Discord
+     EXAMPLE:    # Replace the "00000000000" below with your staff channel's ID
+     EXAMPLE:    Channels: {"global": "00000000000", "staff-chat": "00000000000"}
+     EXAMPLE:    #                                        ^              ^
+     EXAMPLE:    #                         All staff chat messages will be sent to this channel.
+     EXAMPLE:
+
+     IMPORTANT NOTE:
+         The channel's name can be anything on Discord (since DiscordSRV uses its channel ID) ...
+         However, it MUST be called "staff-chat" in the config.
+         **This is very important!**
+
+   - 3) Run: `/discord reload` or restart the server
+
+   - 4) Give staff ranks permission to use the staff chat: `staffchat.access`
+
+   ---
+
+   This config can be reloaded in-game with: '/managestaffchat reload'
+   (Be sure to give yourself permission to manage the staff chat with: 'staffchat.manage')
+
+   ---
+
+   Find available sounds here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html

@@ -20,28 +20,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.rezzedup.discordsrv.staffchat.listeners;
+package com.rezzedup.discordsrv.staffchat;
 
-import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
-import github.scarsz.discordsrv.api.Subscribe;
-import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
-@SuppressWarnings("unused")
-public class DiscordStaffChatListener
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface StaffChatProfile
 {
-    private final StaffChatPlugin plugin;
+    UUID uuid();
     
-    public DiscordStaffChatListener(StaffChatPlugin plugin) { this.plugin = plugin; }
+    Optional<Instant> sinceEnabledAutoChat();
     
-    @Subscribe
-    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
+    boolean automaticStaffChat();
+    
+    void automaticStaffChat(boolean enabled);
+    
+    Optional<Instant> sinceLeftStaffChat();
+    
+    boolean receivesStaffChatMessages();
+    
+    void receivesStaffChatMessages(boolean enabled);
+    
+    default void toggleAutomaticStaffChat()
     {
-        if (event.getChannel().equals(plugin.getDiscordChannelOrNull()))
-        {
-            event.setCancelled(true); // Cancel this message from getting sent to global chat.
-            
-            // Handle this on the main thread next tick.
-            plugin.sync().run(() -> plugin.submitMessageFromDiscord(event.getAuthor(), event.getMessage()));
-        }
+        automaticStaffChat(!automaticStaffChat());
+    }
+    
+    default Optional<Player> toPlayer()
+    {
+        return Optional.ofNullable(Bukkit.getPlayer(uuid()));
     }
 }

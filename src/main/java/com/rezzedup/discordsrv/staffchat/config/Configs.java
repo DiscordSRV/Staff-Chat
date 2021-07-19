@@ -20,28 +20,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.rezzedup.discordsrv.staffchat.listeners;
+package com.rezzedup.discordsrv.staffchat.config;
 
-import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
-import github.scarsz.discordsrv.api.Subscribe;
-import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
+import com.github.zafarkhaja.semver.Version;
+import com.rezzedup.util.valuables.Adapter;
+import community.leaf.configvalues.bukkit.YamlAccessor;
 
-@SuppressWarnings("unused")
-public class DiscordStaffChatListener
+import java.util.Optional;
+
+public class Configs
 {
-    private final StaffChatPlugin plugin;
+    private Configs() { throw new UnsupportedOperationException(); }
     
-    public DiscordStaffChatListener(StaffChatPlugin plugin) { this.plugin = plugin; }
+    public static final Version NO_VERSION = Version.forIntegers(0,0,0);
     
-    @Subscribe
-    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
-    {
-        if (event.getChannel().equals(plugin.getDiscordChannelOrNull()))
-        {
-            event.setCancelled(true); // Cancel this message from getting sent to global chat.
-            
-            // Handle this on the main thread next tick.
-            plugin.sync().run(() -> plugin.submitMessageFromDiscord(event.getAuthor(), event.getMessage()));
-        }
-    }
+    public static YamlAccessor<Version> VERSION =
+        YamlAccessor.of(Adapter.of(
+            object -> {
+                try { return Optional.of(Version.valueOf(String.valueOf(object))); }
+                catch (RuntimeException e) { return Optional.empty(); }
+            },
+            version -> Optional.of(String.valueOf(version))
+        ));
 }

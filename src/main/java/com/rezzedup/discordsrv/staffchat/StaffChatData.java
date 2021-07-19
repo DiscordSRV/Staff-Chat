@@ -20,28 +20,40 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.rezzedup.discordsrv.staffchat.listeners;
+package com.rezzedup.discordsrv.staffchat;
 
-import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
-import github.scarsz.discordsrv.api.Subscribe;
-import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
+import org.bukkit.entity.Player;
 
-@SuppressWarnings("unused")
-public class DiscordStaffChatListener
+import java.util.Optional;
+import java.util.UUID;
+
+public interface StaffChatData
 {
-    private final StaffChatPlugin plugin;
+    StaffChatProfile getOrCreateProfile(UUID uuid);
     
-    public DiscordStaffChatListener(StaffChatPlugin plugin) { this.plugin = plugin; }
+    Optional<StaffChatProfile> getProfile(UUID uuid);
     
-    @Subscribe
-    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
+    default StaffChatProfile getOrCreateProfile(Player player)
     {
-        if (event.getChannel().equals(plugin.getDiscordChannelOrNull()))
-        {
-            event.setCancelled(true); // Cancel this message from getting sent to global chat.
-            
-            // Handle this on the main thread next tick.
-            plugin.sync().run(() -> plugin.submitMessageFromDiscord(event.getAuthor(), event.getMessage()));
-        }
+        return getOrCreateProfile(player.getUniqueId());
+    }
+    
+    default Optional<StaffChatProfile> getProfile(Player player)
+    {
+        // If they're a staff member, then they will always have a profile
+        // otherwise, return the possibly existing profile for non-staff
+        return (Permissions.ACCESS.allows(player))
+            ? Optional.of(getOrCreateProfile(player.getUniqueId()))
+            : getProfile(player.getUniqueId());
+    }
+    
+    default boolean isAutomaticStaffChatEnabled(Player player)
+    {
+        return getProfile(player).filter(StaffChatProfile::automaticStaffChat).isPresent();
+    }
+    
+    default boolean isReceivingStaffChatMessages(Player player)
+    {
+        return getProfile(player).filter(StaffChatProfile::receivesStaffChatMessages).isPresent();
     }
 }

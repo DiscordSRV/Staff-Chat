@@ -20,28 +20,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.rezzedup.discordsrv.staffchat.listeners;
+package com.rezzedup.discordsrv.staffchat.events;
 
-import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
-import github.scarsz.discordsrv.api.Subscribe;
-import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
+import com.rezzedup.discordsrv.staffchat.ChatService;
+import org.bukkit.Bukkit;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.event.HandlerList;
 
 @SuppressWarnings("unused")
-public class DiscordStaffChatListener
+public class ConsoleStaffChatMessageEvent extends StaffChatMessageEvent<ConsoleCommandSender, String>
 {
-    private final StaffChatPlugin plugin;
-    
-    public DiscordStaffChatListener(StaffChatPlugin plugin) { this.plugin = plugin; }
-    
-    @Subscribe
-    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
+    public ConsoleStaffChatMessageEvent(String text)
     {
-        if (event.getChannel().equals(plugin.getDiscordChannelOrNull()))
-        {
-            event.setCancelled(true); // Cancel this message from getting sent to global chat.
-            
-            // Handle this on the main thread next tick.
-            plugin.sync().run(() -> plugin.submitMessageFromDiscord(event.getAuthor(), event.getMessage()));
-        }
+        super(Bukkit.getConsoleSender(), text, text);
     }
+    
+    @Override
+    public final ChatService getSource() { return ChatService.MINECRAFT; }
+    
+    @Override
+    public final ChatService getDestination() { return ChatService.DISCORD; }
+    
+    //
+    //  - - - HandlerList boilerplate - - -
+    //
+    
+    public static final HandlerList HANDLERS = new HandlerList();
+    
+    @Override
+    public HandlerList getHandlers() { return HANDLERS; }
+    
+    public static HandlerList getHandlerList() { return HANDLERS; }
 }

@@ -20,28 +20,44 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.rezzedup.discordsrv.staffchat.listeners;
+package com.rezzedup.discordsrv.staffchat.events;
 
-import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
-import github.scarsz.discordsrv.api.Subscribe;
-import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
+import com.rezzedup.discordsrv.staffchat.StaffChatProfile;
+import org.bukkit.event.Cancellable;
+import org.bukkit.event.Event;
 
-@SuppressWarnings("unused")
-public class DiscordStaffChatListener
+import java.util.Objects;
+
+public abstract class ProfileToggleEvent extends Event implements Cancellable
 {
-    private final StaffChatPlugin plugin;
+    private final StaffChatProfile profile;
+    private final boolean toggleState;
     
-    public DiscordStaffChatListener(StaffChatPlugin plugin) { this.plugin = plugin; }
+    private boolean isQuiet = false;
     
-    @Subscribe
-    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
+    public ProfileToggleEvent(StaffChatProfile profile, boolean toggleState)
     {
-        if (event.getChannel().equals(plugin.getDiscordChannelOrNull()))
-        {
-            event.setCancelled(true); // Cancel this message from getting sent to global chat.
-            
-            // Handle this on the main thread next tick.
-            plugin.sync().run(() -> plugin.submitMessageFromDiscord(event.getAuthor(), event.getMessage()));
-        }
+        this.profile = Objects.requireNonNull(profile, "profile");
+        this.toggleState = toggleState;
     }
+    
+    public StaffChatProfile getProfile() { return profile; }
+    
+    public boolean getToggleState() { return toggleState; }
+    
+    public boolean isQuiet() { return isQuiet; }
+    
+    public void setQuiet(boolean quiet) { this.isQuiet = quiet; }
+    
+    //
+    //  - - - Cancellable boilerplate - - -
+    //
+    
+    private boolean isCancelled = false;
+    
+    @Override
+    public final boolean isCancelled() { return isCancelled; }
+    
+    @Override
+    public final void setCancelled(boolean cancelled) { isCancelled = cancelled; }
 }

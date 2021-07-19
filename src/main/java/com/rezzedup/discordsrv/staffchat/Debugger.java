@@ -1,6 +1,27 @@
+/*
+ * The MIT License
+ * Copyright © 2017-2021 RezzedUp and Contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 package com.rezzedup.discordsrv.staffchat;
 
-import com.rezzedup.discordsrv.staffchat.util.CheckedConsumer;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import org.bukkit.entity.Player;
@@ -12,12 +33,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.function.Supplier;
 
 public class Debugger
 {
-    private static String now() { return OffsetDateTime.now().toString(); }
+    private static String now() { return LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).toString(); }
     
     private static final DebugLogger DISABLED = message -> {};
     
@@ -30,19 +52,12 @@ public class Debugger
     public Debugger(StaffChatPlugin plugin)
     {
         this.plugin = plugin;
-        Path root = plugin.getDataFolder().toPath();
-        this.debugToggleFile = root.resolve("debugging-is-enabled");
-        this.debugLogFile = root.resolve("debug.log");
+        this.debugToggleFile = plugin.directory().resolve("debugging-is-enabled");
+        this.debugLogFile = plugin.directory().resolve("debug.log");
         this.isEnabled = isToggleFilePresent();
     }
     
     private boolean isToggleFilePresent() { return Files.isRegularFile(debugToggleFile); }
-    
-    private void updateToggleFile(CheckedConsumer<Path, IOException> update)
-    {
-        try { update.accept(debugToggleFile); }
-        catch (IOException e) { e.printStackTrace(); }
-    }
     
     public boolean isEnabled() { return isEnabled; }
     
@@ -52,16 +67,20 @@ public class Debugger
         
         this.isEnabled = enabled;
         
-        if (enabled)
+        try
         {
-            printThenWriteToLogFile("========== Starting Debugger ==========");
-            if (!isToggleFilePresent()) { updateToggleFile(Files::createFile); }
+            if (enabled)
+            {
+                printThenWriteToLogFile("========== Starting Debugger ==========");
+                if (!isToggleFilePresent()) { Files.createFile(debugToggleFile); }
+            }
+            else
+            {
+                printThenWriteToLogFile("========== Disabled Debugger ==========");
+                Files.deleteIfExists(debugToggleFile);
+            }
         }
-        else
-        {
-            printThenWriteToLogFile("========== Disabled Debugger ==========");
-            updateToggleFile(Files::deleteIfExists);
-        }
+        catch (IOException e) { e.printStackTrace(); }
     }
     
     public DebugLogger debug(Class<?> clazz)
@@ -91,10 +110,10 @@ public class Debugger
         if (!isEnabled) { return; }
         
         // Log status directly on the next tick.
-        plugin.getServer().getScheduler().runTask(plugin, () -> logPluginStatus(clazz, context + " (Initial)"));
-        
+        plugin.sync().run(() -> logPluginStatus(clazz, context + " (Initial)"));
+    
         // Log status 30 seconds after so that DiscordSRV has a chance to connect.
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> logPluginStatus(clazz, context + " (30 Seconds)"), 30 * 20L);
+        plugin.sync().delay(30).seconds().run(() -> logPluginStatus(clazz, context + " (30 Seconds)"));
     }
     
     private void logPluginStatus(Class<?> clazz, String context)
@@ -109,9 +128,9 @@ public class Debugger
             boolean isChannelReady = channel != null;
             
             return "[Status: " + context + "] " +
-                "Is DiscordSRV installed and enabled? " + isDiscordSrvEnabled + " :: " +
-                "Is DiscordSRV hooked? " + isDiscordSrvHooked + " :: " +
-                "Is " + StaffChatPlugin.CHANNEL + " channel ready? " + isChannelReady + " (" + channel + ")";
+                   "Is DiscordSRV installed and enabled? " + isDiscordSrvEnabled + " :: " +
+                   "Is DiscordSRV hooked? " + isDiscordSrvHooked + " :: " +
+                   "Is " + StaffChatPlugin.CHANNEL + " channel ready? " + isChannelReady + " (" + channel + ")";
         });
     }
     
@@ -147,23 +166,17 @@ public class Debugger
             recordDebugLogEntry(() -> source.asPrefixInBrackets(handleContext(context)) + " " + message.get());
         }
         
-        default void logMessageSubmissionFromInGame(Player author, String message)
-        {
-            log(ChatService.MINECRAFT, "Message", () ->
-                "from(" + author.getName() + ") message(\"" + message + "\")"
-            );
-        }
-        
-        default void logMessageSubmissionFromDiscord(User author, Message message)
-        {
-            log(ChatService.DISCORD, "Message", () ->
-                "from(" + author.getName() + "#" + author.getDiscriminator() + ") message(\"" + message.getContentStripped() + "\")"
-            );
-        }
-        
         default void header(Supplier<String> message)
         {
             recordDebugLogEntry(() -> "---------- " + message.get() + " ----------");
+        }
+        
+        default void logException(Object context, Throwable exception)
+        {
+            log(context, () -> {
+                exception.printStackTrace();
+                return handleException(exception);
+            });
         }
         
         default <T extends Throwable> T failure(T exception) throws T
@@ -176,6 +189,27 @@ public class Debugger
         {
             log(context, () -> handleException(exception));
             throw exception;
+        }
+        
+        default void logConsoleChatMessage(String message)
+        {
+            log(ChatService.MINECRAFT, "Message", () ->
+                "from(<CONSOLE>) message(\"" + message + "\")"
+            );
+        }
+        
+        default void logPlayerChatMessage(Player author, String message)
+        {
+            log(ChatService.MINECRAFT, "Message", () ->
+                "from(" + author.getName() + ") message(\"" + message + "\")"
+            );
+        }
+        
+        default void logDiscordChatMessage(User author, Message message)
+        {
+            log(ChatService.DISCORD, "Message", () ->
+                "from(" + author.getName() + "#" + author.getDiscriminator() + ") message(\"" + message.getContentStripped() + "\")"
+            );
         }
     }
 }

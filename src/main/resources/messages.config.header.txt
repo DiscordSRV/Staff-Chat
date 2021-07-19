@@ -1,0 +1,19 @@
+
+   ${project.name}: Messages Config
+
+   ---
+
+   Supported hex color code formats: &x&R&R&G&G&B&B and &#RRGGBB
+
+   Player placeholders:
+       %name%: player's name
+       %nickname%: player's nickname if they have one (falls back to regular name)
+
+   Discord placeholders:
+       %name%: discord user's name
+       %discriminator%: discord user's discriminator (#0000)
+       %nickname%: discord user's nickname if they have one (falls back to regular name)
+
+   You may also use placeholders from PlaceholderAPI if it is installed.
+
+   ---

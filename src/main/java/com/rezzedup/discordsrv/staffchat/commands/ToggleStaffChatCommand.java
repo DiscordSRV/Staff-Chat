@@ -20,28 +20,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.rezzedup.discordsrv.staffchat.listeners;
+package com.rezzedup.discordsrv.staffchat.commands;
 
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
-import github.scarsz.discordsrv.api.Subscribe;
-import github.scarsz.discordsrv.api.events.DiscordGuildMessagePreProcessEvent;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
-@SuppressWarnings("unused")
-public class DiscordStaffChatListener
+public class ToggleStaffChatCommand implements CommandExecutor
 {
     private final StaffChatPlugin plugin;
     
-    public DiscordStaffChatListener(StaffChatPlugin plugin) { this.plugin = plugin; }
-    
-    @Subscribe
-    public void onDiscordChat(DiscordGuildMessagePreProcessEvent event)
+    public ToggleStaffChatCommand(StaffChatPlugin plugin)
     {
-        if (event.getChannel().equals(plugin.getDiscordChannelOrNull()))
+        this.plugin = plugin;
+    }
+    
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
+    {
+        if (sender instanceof Player)
         {
-            event.setCancelled(true); // Cancel this message from getting sent to global chat.
-            
-            // Handle this on the main thread next tick.
-            plugin.sync().run(() -> plugin.submitMessageFromDiscord(event.getAuthor(), event.getMessage()));
+            // Either join or leave so...
+            plugin.data().getOrCreateProfile((Player) sender)
+                .receivesStaffChatMessages(command.getName().contains("join"));
         }
+        else
+        {
+            sender.sendMessage("Only players may run this command.");
+        }
+        
+        return true;
     }
 }
