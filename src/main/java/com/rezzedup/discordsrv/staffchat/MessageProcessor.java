@@ -33,13 +33,18 @@ import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.emoji.EmojiParser;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Member;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
+import github.scarsz.discordsrv.dependencies.jda.api.entities.Role;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.User;
 import github.scarsz.discordsrv.util.DiscordUtil;
 import me.clip.placeholderapi.PlaceholderAPI;
+import net.md_5.bungee.api.ChatColor;
 import org.bukkit.entity.Player;
 import pl.tlinkowski.annotation.basic.NullOr;
 
+import java.awt.Color;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -214,10 +219,38 @@ public class MessageProcessor
         placeholders.map("user", "name", "username", "sender").to(author::getName);
         placeholders.map("discriminator", "discrim").to(author::getDiscriminator);
         
-        placeholders.map("nickname", "displayname").to(() -> {
-            @NullOr Member member = message.getGuild().getMember(author);
-            return (member == null ) ? "" : member.getEffectiveName();
-        });
+        @NullOr Member member = message.getMember();
+        
+        if (member != null)
+        {
+            placeholders.map("nickname", "displayname").to(member::getEffectiveName);
+            
+            // Simulate placeholders from DiscordSRV:
+            // https://github.com/DiscordSRV/DiscordSRV/blob/1d08598206b1af5dcc29e411cead8e152e4c3f94/src/main/java/github/scarsz/discordsrv/listeners/DiscordChatListener.java#L293
+            
+            DiscordSRV discordSrv = DiscordSRV.getPlugin();
+            List<Role> selectedRoles = discordSrv.getSelectedRoles(member);
+            @NullOr Role topRole = (selectedRoles.isEmpty()) ? null : selectedRoles.get(0);
+            
+            if (topRole != null)
+            {
+                placeholders.map("toprole").to(topRole::getName);
+                placeholders.map("toproleinitial").to(() -> topRole.getName().substring(0, 1));
+                
+                placeholders.map("toprolealias").to(() ->
+                    discordSrv.getRoleAliases().getOrDefault(
+                        topRole.getId(),
+                        discordSrv.getRoleAliases().getOrDefault(
+                            topRole.getName().toLowerCase(Locale.ROOT),
+                            topRole.getName()
+                        )
+                    )
+                );
+                
+                placeholders.map("toprolecolor").to(() -> ChatColor.of(new Color(topRole.getColorRaw())));
+                placeholders.map("allroles").to(() -> DiscordUtil.getFormattedRoles(selectedRoles));
+            }
+        }
         
         sendFormattedChatMessage(author, MessagesConfig.IN_GAME_DISCORD_FORMAT, placeholders);
     }
