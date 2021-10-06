@@ -6,7 +6,7 @@
 
     <groupId>com.rezzedup</groupId>
     <artifactId>discordsrv-staff-chat</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
 
     <name>DiscordSRV-Staff-Chat</name>
     <inceptionYear>2017</inceptionYear>
@@ -50,7 +50,7 @@
         <dependency>
             <groupId>com.discordsrv</groupId>
             <artifactId>discordsrv</artifactId>
-            <version>1.23.0</version>
+            <version>1.24.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- PlaceholderAPI (via jitpack.io) -->
@@ -64,13 +64,13 @@
         <dependency>
             <groupId>community.leaf.configvalues</groupId>
             <artifactId>config-values-bukkit</artifactId>
-            <version>0.0.3</version>
+            <version>0.0.4</version>
         </dependency>
         <!-- LeafCommunity Eventful (via jitpack.io) -->
         <dependency>
             <groupId>community.leaf.eventful</groupId>
             <artifactId>events-bukkit</artifactId>
-            <version>0.1.0</version>
+            <version>0.3.0</version>
         </dependency>
         <!-- LeafCommunity Tasks (via jitpack.io) -->
         <dependency>
