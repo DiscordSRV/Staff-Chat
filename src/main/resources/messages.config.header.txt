@@ -6,13 +6,18 @@
    Supported hex color code formats: &x&R&R&G&G&B&B and &#RRGGBB
 
    Player placeholders:
-       %name%: player's name
-       %nickname%: player's nickname if they have one (falls back to regular name)
+       %name%:      player's name
+       %nickname%:  player's nickname if they have one (falls back to regular name)
 
    Discord placeholders:
-       %name%: discord user's name
-       %discriminator%: discord user's discriminator (#0000)
-       %nickname%: discord user's nickname if they have one (falls back to regular name)
+       %name%:              discord user's name
+       %discriminator%:     discord user's discriminator (#0000)
+       %nickname%:          discord user's nickname if they have one (falls back to regular name)
+       %toprole%:           discord user's topmost role
+       %toproleinitial%:    the first character of the discord user's topmost role
+       %toprolealias%:      alias for the discord user's topmost role as defined in DiscordSRV's config
+       %toprolecolor%:      an RGB color code derived from the discord user's topmost role
+       %allroles%:          all the discord user's roles
 
    You may also use placeholders from PlaceholderAPI if it is installed.
 
