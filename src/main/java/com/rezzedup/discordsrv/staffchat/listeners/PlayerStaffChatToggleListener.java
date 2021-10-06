@@ -27,9 +27,11 @@ import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.events.AutoStaffChatToggleEvent;
 import com.rezzedup.discordsrv.staffchat.events.ReceivingStaffChatToggleEvent;
+import community.leaf.eventful.bukkit.CancellationPolicy;
+import community.leaf.eventful.bukkit.ListenerOrder;
+import community.leaf.eventful.bukkit.annotations.CancelledEvents;
+import community.leaf.eventful.bukkit.annotations.EventListener;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import pl.tlinkowski.annotation.basic.NullOr;
@@ -44,7 +46,7 @@ public class PlayerStaffChatToggleListener implements Listener
         this.plugin = plugin;
     }
     
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventListener(ListenerOrder.FIRST)
     public void onAutomaticChat(AsyncPlayerChatEvent event)
     {
         Player player = event.getPlayer();
@@ -76,7 +78,8 @@ public class PlayerStaffChatToggleListener implements Listener
         }
     }
     
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventListener(ListenerOrder.LAST)
+    @CancelledEvents(CancellationPolicy.REJECT)
     public void onToggleAutoChat(AutoStaffChatToggleEvent event)
     {
         @NullOr Player player = event.getProfile().toPlayer().orElse(null);
@@ -93,7 +96,8 @@ public class PlayerStaffChatToggleListener implements Listener
         else { plugin.messages().notifyAutoChatDisabled(player); }
     }
     
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    @EventListener(ListenerOrder.EARLY)
+    @CancelledEvents(CancellationPolicy.REJECT)
     public void onLeavingStaffChatIsDisabled(ReceivingStaffChatToggleEvent event)
     {
         if (event.isJoiningStaffChat()) { return; }
@@ -115,7 +119,8 @@ public class PlayerStaffChatToggleListener implements Listener
         plugin.messages().notifyLeavingChatIsDisabled(player);
     }
     
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventListener(ListenerOrder.LAST)
+    @CancelledEvents(CancellationPolicy.REJECT)
     public void onToggleReceivingMessages(ReceivingStaffChatToggleEvent event)
     {
         @NullOr Player player = event.getProfile().toPlayer().orElse(null);

@@ -25,9 +25,9 @@ package com.rezzedup.discordsrv.staffchat.listeners;
 import com.rezzedup.discordsrv.staffchat.Permissions;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
+import community.leaf.eventful.bukkit.ListenerOrder;
+import community.leaf.eventful.bukkit.annotations.EventListener;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -44,7 +44,7 @@ public class JoinNotificationListener implements Listener
         this.plugin = plugin;
     }
     
-    @EventHandler(priority = EventPriority.LOW)
+    @EventListener(ListenerOrder.EARLY)
     public void onPlayerJoin(PlayerJoinEvent event)
     {
         Player player = event.getPlayer();
@@ -103,7 +103,7 @@ public class JoinNotificationListener implements Listener
         });
     }
     
-    @EventHandler(priority = EventPriority.LOW)
+    @EventListener(ListenerOrder.EARLY)
     public void onPlayerQuit(PlayerQuitEvent event)
     {
         // Might as well update the profile (cleanup)

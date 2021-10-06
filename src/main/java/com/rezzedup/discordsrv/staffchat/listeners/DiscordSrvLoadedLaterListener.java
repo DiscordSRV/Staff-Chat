@@ -23,7 +23,7 @@
 package com.rezzedup.discordsrv.staffchat.listeners;
 
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
-import org.bukkit.event.EventHandler;
+import community.leaf.eventful.bukkit.annotations.EventListener;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
 
@@ -34,7 +34,7 @@ public class DiscordSrvLoadedLaterListener implements Listener
     
     public DiscordSrvLoadedLaterListener(StaffChatPlugin plugin) { this.plugin = plugin; }
     
-    @EventHandler
+    @EventListener
     public void onPluginEnable(PluginEnableEvent event)
     {
         if (StaffChatPlugin.DISCORDSRV.equals(event.getPlugin().getName()))

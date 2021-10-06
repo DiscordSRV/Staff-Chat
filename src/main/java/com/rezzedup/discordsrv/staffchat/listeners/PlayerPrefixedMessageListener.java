@@ -26,9 +26,11 @@ import com.rezzedup.discordsrv.staffchat.Permissions;
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.util.Strings;
+import community.leaf.eventful.bukkit.CancellationPolicy;
+import community.leaf.eventful.bukkit.ListenerOrder;
+import community.leaf.eventful.bukkit.annotations.CancelledEvents;
+import community.leaf.eventful.bukkit.annotations.EventListener;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
@@ -39,7 +41,8 @@ public class PlayerPrefixedMessageListener implements Listener
     
     public PlayerPrefixedMessageListener(StaffChatPlugin plugin) { this.plugin = plugin; }
     
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    @EventListener(ListenerOrder.EARLY)
+    @CancelledEvents(CancellationPolicy.REJECT)
     public void onPrefixedChat(AsyncPlayerChatEvent event)
     {
         if (!plugin.config().getOrDefault(StaffChatConfig.PREFIXED_CHAT_ENABLED)) { return; }

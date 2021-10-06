@@ -36,7 +36,7 @@ import com.rezzedup.discordsrv.staffchat.listeners.PlayerStaffChatToggleListener
 import com.rezzedup.discordsrv.staffchat.util.FileIO;
 import community.leaf.configvalues.bukkit.YamlValue;
 import community.leaf.configvalues.bukkit.data.YamlDataFile;
-import community.leaf.eventful.bukkit.EventSource;
+import community.leaf.eventful.bukkit.BukkitEventSource;
 import community.leaf.tasks.bukkit.BukkitTaskSource;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
@@ -56,7 +56,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, EventSource, StaffChatAPI
+public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, BukkitEventSource, StaffChatAPI
 {
     // https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056
     public static final int BSTATS = 11056;
