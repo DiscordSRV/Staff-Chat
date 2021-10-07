@@ -6,8 +6,8 @@
    Supported hex color code formats: &x&R&R&G&G&B&B and &#RRGGBB
 
    Player placeholders:
-       %name%:      player's name
-       %nickname%:  player's nickname if they have one (falls back to regular name)
+       %name%:              player's name
+       %nickname%:          player's nickname, if they have one (falls back to regular name)
 
    Discord placeholders:
        %name%:              discord user's name
