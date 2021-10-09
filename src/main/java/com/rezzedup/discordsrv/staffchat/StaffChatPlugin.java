@@ -124,7 +124,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Buk
             getLogger().warning("Staff chat messages will still work in-game, however.");
             
             // Subscribe to DiscordSRV later because it somehow hasn't enabled yet.
-            getServer().getPluginManager().registerEvents(new DiscordSrvLoadedLaterListener(this), this);
+            events().register(new DiscordSrvLoadedLaterListener(this));
         }
         
         startMetrics();
