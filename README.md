@@ -74,7 +74,7 @@ Channels: {"global": "000000000000000000", "staff-chat": "337769984539361281"}
 
 **Permission:** `staffchat.manage`
 
-**Aliases:** `/discordsrv-staff-chat`, `/discrodsrvstaffchat`, `/discordstaffchat`, `/discordadminchat`, `/manageadminchat`
+**Aliases:** `/discordsrv-staff-chat`, `/discordsrvstaffchat`, `/discordstaffchat`, `/discordadminchat`, `/manageadminchat`
 
 **Usage:**
 - `/managestaffchat` - Display plugin information and command usage.
