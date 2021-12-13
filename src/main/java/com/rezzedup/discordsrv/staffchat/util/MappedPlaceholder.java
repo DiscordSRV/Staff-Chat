@@ -51,11 +51,16 @@ public class MappedPlaceholder
         return (result == null) ? "" : String.valueOf(result);
     }
     
+    private static String escape(String literal)
+    {
+        return literal.replace("\\", "\\\\").replace("$", "\\$");
+    }
+    
     public String update(String message)
     {
         return PATTERN.matcher(message).replaceAll(mr -> {
             String value = get(mr.group(1));
-            return (value.isEmpty()) ? mr.group() : value;
+            return escape((value.isEmpty()) ? mr.group() : value);
         });
     }
     

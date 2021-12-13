@@ -6,7 +6,7 @@
 
     <groupId>com.rezzedup</groupId>
     <artifactId>discordsrv-staff-chat</artifactId>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
 
     <name>DiscordSRV-Staff-Chat</name>
     <inceptionYear>2017</inceptionYear>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.17.1-R0.1-SNAPSHOT</version>
+            <version>1.18.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <!-- DiscordSRV (via scarsz-nexus) -->
