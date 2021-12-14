@@ -1,4 +1,11 @@
-# ![](https://i.imgur.com/DZwTm1u.png)
+<h1 style="text-align: center">
+  <img src="https://i.imgur.com/DZwTm1u.png" alt="DiscordSRV-Staff-Chat Logo">
+</h1>
+
+[![](https://img.shields.io/badge/License-MIT-blue)](./LICENSE "Project License: MIT")
+[![](https://img.shields.io/badge/Java-11-orange)](# "Java Version: 11")
+[![](https://img.shields.io/github/v/release/DiscordSRV/Staff-Chat.svg?label=Release&color=ok)](https://github.com/DiscordSRV/Staff-Chat/releases/latest "Latest Release")
+[![](https://img.shields.io/spiget/downloads/44245?color=yellow&label=Spigot%20Downloads)](https://www.spigotmc.org/resources/discordsrv-staff-chat.44245/ "Spigot Resource Page")
 
 **Spigot:** https://www.spigotmc.org/resources/discordsrv-staff-chat.44245/
 
