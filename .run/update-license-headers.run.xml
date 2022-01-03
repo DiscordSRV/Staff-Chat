@@ -10,7 +10,6 @@
           </option>
           <option name="goals">
             <list>
-              <option value="license:remove" />
               <option value="license:format" />
             </list>
           </option>
@@ -20,7 +19,7 @@
               <entry key="development" value="false" />
             </map>
           </option>
-          <option name="resolveToWorkspace" value="true" />
+          <option name="resolveToWorkspace" value="false" />
           <option name="workingDirPath" value="$PROJECT_DIR$" />
         </MavenRunnerParameters>
       </option>
