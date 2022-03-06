@@ -49,21 +49,22 @@ public class PlayerStaffChatToggleListener implements Listener
     @EventListener(ListenerOrder.FIRST)
     public void onAutomaticChatFirst(AsyncPlayerChatEvent event)
     {
-        Player player = event.getPlayer();
-        if (!plugin.data().isAutomaticStaffChatEnabled(player)) { return; }
-        
-        event.setCancelled(true); // Cancel this message from getting sent to global chat.
-        //Handle message in a later listener order allowing other plugins to modify the message
+        if (plugin.data().isAutomaticStaffChatEnabled(event.getPlayer()))
+        {
+            event.setCancelled(true); // Cancel this message from getting sent to global chat.
+            // Handle message in a later listener order, allowing other plugins to modify the message.
+        }
     }
-
+    
     @EventListener(ListenerOrder.MONITOR)
     public void onAutomaticChatMonitor(AsyncPlayerChatEvent event)
     {
         Player player = event.getPlayer();
         if (!plugin.data().isAutomaticStaffChatEnabled(player)) { return; }
-
+        
         event.setCancelled(true); // Cancel this message from getting sent to global chat.
-
+        // The event could've been uncancelled since cancelling it the first time.
+        
         if (Permissions.ACCESS.allows(player))
         {
             plugin.debug(getClass()).log(event, () ->

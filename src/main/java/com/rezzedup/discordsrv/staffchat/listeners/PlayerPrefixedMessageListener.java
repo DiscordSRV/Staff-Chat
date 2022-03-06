@@ -59,25 +59,22 @@ public class PlayerPrefixedMessageListener implements Listener
         
         String message = event.getMessage();
         if (!message.startsWith(identifier)) { return; }
-    
-        String unprefixed = message.substring(identifier.length()).trim();
-        String submission = (Strings.isEmptyOrNull(unprefixed)) ? message : unprefixed;
         
         plugin.debug(getClass()).log(event, () ->
             "Early Listener: Identified prefixed chat from player(" + player.getName() + ") identified " +
-            "by prefix(\"" + identifier + "\"): message(\"" + submission + "\")"
+            "by prefix(\"" + identifier + "\"): full-message(\"" + message + "\")"
         );
         
         event.setCancelled(true); // Cancel this message from getting sent to global chat.
-
-        //Handle message in a later listener order allowing other plugins to modify the message
+        // Handle message in a later listener order, allowing other plugins to modify the message.
     }
 
     @EventListener(ListenerOrder.MONITOR)
     public void onPrefixedChatMonitor(AsyncPlayerChatEvent event)
     {
-        if (!event.isCancelled()) { return; } //Event should already be cancelled in the early listener
-
+        // Event should already be cancelled in the early listener.
+        if (!event.isCancelled()) { return; }
+        
         if (!plugin.config().getOrDefault(StaffChatConfig.PREFIXED_CHAT_ENABLED)) { return; }
 
         Player player = event.getPlayer();
