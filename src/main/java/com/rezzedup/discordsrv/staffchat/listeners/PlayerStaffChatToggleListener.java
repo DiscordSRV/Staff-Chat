@@ -47,19 +47,29 @@ public class PlayerStaffChatToggleListener implements Listener
     }
     
     @EventListener(ListenerOrder.FIRST)
-    public void onAutomaticChat(AsyncPlayerChatEvent event)
+    public void onAutomaticChatFirst(AsyncPlayerChatEvent event)
     {
         Player player = event.getPlayer();
         if (!plugin.data().isAutomaticStaffChatEnabled(player)) { return; }
         
         event.setCancelled(true); // Cancel this message from getting sent to global chat.
-        
+        //Handle message in a later listener order allowing other plugins to modify the message
+    }
+
+    @EventListener(ListenerOrder.MONITOR)
+    public void onAutomaticChatMonitor(AsyncPlayerChatEvent event)
+    {
+        Player player = event.getPlayer();
+        if (!plugin.data().isAutomaticStaffChatEnabled(player)) { return; }
+
+        event.setCancelled(true); // Cancel this message from getting sent to global chat.
+
         if (Permissions.ACCESS.allows(player))
         {
             plugin.debug(getClass()).log(event, () ->
                 "Player " + player.getName() + " has automatic staff-chat enabled"
             );
-            
+
             // Handle this on the main thread next tick.
             plugin.sync().run(() -> plugin.submitMessageFromPlayer(event.getPlayer(), event.getMessage()));
         }
@@ -69,7 +79,7 @@ public class PlayerStaffChatToggleListener implements Listener
                 "Player " + player.getName() + " has automatic staff-chat enabled " +
                 "but they don't have permission to use the staff chat"
             );
-            
+
             // Remove this non-staff profile (but in sync 'cus it calls an event).
             plugin.sync().run(() -> {
                 plugin.data().updateProfile(player);
