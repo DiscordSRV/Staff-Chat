@@ -218,6 +218,13 @@
         <directory>src/main/resources</directory>
         <filtering>true</filtering>
       </resource>
+      <!-- Include license in built jar -->
+      <resource>
+        <directory>.</directory>
+        <includes>
+          <include>LICENSE</include>
+        </includes>
+      </resource>
     </resources>
   </build>
 

@@ -61,8 +61,7 @@ public class PlayerPrefixedMessageListener implements Listener
         if (!message.startsWith(identifier)) { return; }
         
         plugin.debug(getClass()).log(event, () ->
-            "Early Listener: Identified prefixed chat from player(" + player.getName() + ") identified " +
-            "by prefix(\"" + identifier + "\"): full-message(\"" + message + "\")"
+            "Early Listener: Detected prefixed chat from player(" + player.getName() + "): message(\"" + message + "\")"
         );
         
         event.setCancelled(true); // Cancel this message from getting sent to global chat.
