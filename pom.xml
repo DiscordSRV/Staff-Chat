@@ -6,7 +6,7 @@
   
   <groupId>com.rezzedup</groupId>
   <artifactId>discordsrv-staff-chat</artifactId>
-  <version>1.4.2</version>
+  <version>1.4.3</version>
   
   <name>DiscordSRV-Staff-Chat</name>
   <inceptionYear>2017</inceptionYear>
@@ -48,7 +48,7 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.18.1-R0.1-SNAPSHOT</version>
+      <version>1.18.2-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <!-- DiscordSRV (via scarsz-nexus) -->
@@ -69,7 +69,7 @@
     <dependency>
       <groupId>community.leaf.configvalues</groupId>
       <artifactId>config-values-bukkit</artifactId>
-      <version>0.0.4</version>
+      <version>0.0.7</version>
     </dependency>
     <!-- LeafCommunity Eventful (via jitpack.io) -->
     <dependency>
@@ -81,7 +81,7 @@
     <dependency>
       <groupId>community.leaf.tasks</groupId>
       <artifactId>tasks-bukkit</artifactId>
-      <version>0.0.1</version>
+      <version>0.0.2</version>
     </dependency>
     <!-- Java SemVer (via maven-central) -->
     <!-- https://github.com/zafarkhaja/jsemver -->
@@ -94,7 +94,7 @@
     <dependency>
       <groupId>org.bstats</groupId>
       <artifactId>bstats-bukkit</artifactId>
-      <version>2.2.1</version>
+      <version>3.0.0</version>
     </dependency>
     <!-- Nullness Annotations: @NullOr (via maven-central) -->
     <dependency>
@@ -196,6 +196,7 @@
                 <exclude>examples/**</exclude>
                 <exclude>src/test/resources/**</exclude>
                 <exclude>src/main/resources/**</exclude>
+                <exclude>.editorconfig</exclude>
               </excludes>
             </licenseSet>
           </licenseSets>

@@ -11,6 +11,7 @@
           <option name="goals">
             <list>
               <option value="clean" />
+              <option value="license:format" />
               <option value="package" />
             </list>
           </option>

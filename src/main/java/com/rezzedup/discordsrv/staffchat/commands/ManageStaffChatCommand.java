@@ -24,8 +24,8 @@ package com.rezzedup.discordsrv.staffchat.commands;
 
 import com.rezzedup.discordsrv.staffchat.StaffChatPlugin;
 import com.rezzedup.util.constants.Aggregates;
+import com.rezzedup.util.constants.MatchRules;
 import com.rezzedup.util.constants.annotations.AggregatedResult;
-import com.rezzedup.util.constants.types.TypeCapture;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -49,11 +49,12 @@ public class ManageStaffChatCommand implements CommandExecutor, TabCompleter
     
     @AggregatedResult
     private static final Set<String> ALL_OPTION_ALIASES =
-        Aggregates.set(
-            ManageStaffChatCommand.class,
-            TypeCapture.type(String.class),
-            Aggregates.matching().all("ALIAS").collections(true)
-        );
+        Aggregates.fromThisClass()
+            .constantsOfType(String.class)
+            .matching(
+                MatchRules.of().all("ALIAS").collections(true)
+            )
+            .toSet();
     
     private final StaffChatPlugin plugin;
     

@@ -32,6 +32,7 @@ import com.rezzedup.util.constants.annotations.AggregatedResult;
 import community.leaf.configvalues.bukkit.DefaultYamlValue;
 import community.leaf.configvalues.bukkit.ExampleYamlValue;
 import community.leaf.configvalues.bukkit.YamlValue;
+import community.leaf.configvalues.bukkit.data.Load;
 import community.leaf.configvalues.bukkit.data.YamlDataFile;
 import community.leaf.configvalues.bukkit.migrations.Migration;
 import community.leaf.configvalues.bukkit.util.Sections;
@@ -116,7 +117,8 @@ public class MessagesConfig extends YamlDataFile
             .defaults("%prefix% &2→&a %player% &njoined&a the staff chat");
     
     @AggregatedResult
-    public static final List<YamlValue<?>> VALUES = Aggregates.list(MessagesConfig.class, YamlValue.type());
+    public static final List<YamlValue<?>> VALUES =
+        Aggregates.fromThisClass().constantsOfType(YamlValue.type()).toList();
     
     private final StaffChatPlugin plugin;
     
@@ -124,7 +126,7 @@ public class MessagesConfig extends YamlDataFile
     
     public MessagesConfig(StaffChatPlugin plugin)
     {
-        super(plugin.directory(), "messages.config.yml");
+        super(plugin.directory(), "messages.config.yml", Load.NOW);
         this.plugin = plugin;
         
         reloadsWith(() ->

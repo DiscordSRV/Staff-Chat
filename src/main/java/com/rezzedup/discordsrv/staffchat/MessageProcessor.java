@@ -42,7 +42,7 @@ import net.md_5.bungee.api.ChatColor;
 import org.bukkit.entity.Player;
 import pl.tlinkowski.annotation.basic.NullOr;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;

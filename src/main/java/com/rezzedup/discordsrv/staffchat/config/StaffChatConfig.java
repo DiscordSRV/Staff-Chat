@@ -28,6 +28,7 @@ import com.rezzedup.util.constants.Aggregates;
 import com.rezzedup.util.constants.annotations.AggregatedResult;
 import community.leaf.configvalues.bukkit.DefaultYamlValue;
 import community.leaf.configvalues.bukkit.YamlValue;
+import community.leaf.configvalues.bukkit.data.Load;
 import community.leaf.configvalues.bukkit.data.YamlDataFile;
 import community.leaf.configvalues.bukkit.migrations.Migration;
 import org.bukkit.Sound;
@@ -101,11 +102,12 @@ public class StaffChatConfig extends YamlDataFile
         YamlValue.ofFloat("sounds.notifications.pitch").defaults(0.75F);
     
     @AggregatedResult
-    public static final List<YamlValue<?>> VALUES = Aggregates.list(StaffChatConfig.class, YamlValue.type());
+    public static final List<YamlValue<?>> VALUES =
+        Aggregates.fromThisClass().constantsOfType(YamlValue.type()).toList();
     
     public StaffChatConfig(StaffChatPlugin plugin)
     {
-        super(plugin.directory(), "staff-chat.config.yml");
+        super(plugin.directory(), "staff-chat.config.yml", Load.NOW);
         
         reloadsWith(() ->
         {

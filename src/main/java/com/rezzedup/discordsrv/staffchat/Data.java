@@ -22,7 +22,6 @@
  */
 package com.rezzedup.discordsrv.staffchat;
 
-import com.rezzedup.discordsrv.staffchat.config.Configs;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.events.AutoStaffChatToggleEvent;
 import com.rezzedup.discordsrv.staffchat.events.ReceivingStaffChatToggleEvent;
