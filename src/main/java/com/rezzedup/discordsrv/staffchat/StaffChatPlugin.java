@@ -92,7 +92,7 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Buk
         this.config = new StaffChatConfig(this);
         this.messages = new MessagesConfig(this);
     
-        upgradeLegacyConfig();
+        loadConfigurationFiles();
         
         this.data = new Data(this);
         this.updater = new Updater(this);
@@ -237,6 +237,16 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Buk
     //
     //
     //
+    
+    private void loadConfigurationFiles()
+    {
+        // Explicitly load configs
+        config().reload();
+        messages().reload();
+        
+        // Upgrade & migrate legacy config if it exists
+        upgradeLegacyConfig();
+    }
     
     private void upgradeLegacyConfig(YamlDataFile file, List<YamlValue<?>> values)
     {
