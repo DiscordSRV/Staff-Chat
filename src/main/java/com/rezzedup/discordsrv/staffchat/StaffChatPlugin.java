@@ -128,6 +128,12 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Buk
         }
         
         startMetrics();
+        
+        // Display toggle message so that auto staff-chat users are aware that their chat is private again.
+        // Useful when hot loading this plugin on a live server.
+        onlineStaffChatParticipants()
+            .filter(data()::isAutomaticStaffChatEnabled)
+            .forEach(messages()::notifyAutoChatEnabled);
     }
     
     @Override
@@ -137,8 +143,9 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Buk
         
         data().end();
         updater().end();
-        
+
         // Display toggle message so that auto staff-chat users are aware that their chat is public again.
+        // Useful when selectively disabling this plugin on a live server.
         onlineStaffChatParticipants()
             .filter(data()::isAutomaticStaffChatEnabled)
             .forEach(messages()::notifyAutoChatDisabled);

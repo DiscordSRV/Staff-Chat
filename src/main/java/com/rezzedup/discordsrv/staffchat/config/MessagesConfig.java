@@ -126,14 +126,23 @@ public class MessagesConfig extends YamlDataFile
     
     public MessagesConfig(StaffChatPlugin plugin)
     {
-        super(plugin.directory(), "messages.config.yml", Load.NOW);
+        super(plugin.directory(), "messages.config.yml", Load.LATER);
         this.plugin = plugin;
         
         reloadsWith(() ->
         {
             if (isInvalid())
             {
+                Configs.couldNotLoad(plugin.getLogger(), getFilePath());
                 plugin.debug(getClass()).log("Reload", () -> "Couldn't load: " + getInvalidReason());
+    
+                // Add default placeholders
+                if (definitions == null)
+                {
+                    definitions = new MappedPlaceholder();
+                    definitions.map("prefix").to(PREFIX::getDefaultValue);
+                }
+                
                 return;
             }
             

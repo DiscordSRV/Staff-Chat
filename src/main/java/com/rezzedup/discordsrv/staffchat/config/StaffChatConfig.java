@@ -107,12 +107,13 @@ public class StaffChatConfig extends YamlDataFile
     
     public StaffChatConfig(StaffChatPlugin plugin)
     {
-        super(plugin.directory(), "staff-chat.config.yml", Load.NOW);
+        super(plugin.directory(), "staff-chat.config.yml", Load.LATER);
         
         reloadsWith(() ->
         {
             if (isInvalid())
             {
+                Configs.couldNotLoad(plugin.getLogger(), getFilePath());
                 plugin.debug(getClass()).log("Reload", () -> "Couldn't load: " + getInvalidReason());
                 return;
             }

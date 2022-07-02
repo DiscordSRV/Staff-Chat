@@ -26,7 +26,9 @@ import com.github.zafarkhaja.semver.Version;
 import com.rezzedup.util.valuables.Adapter;
 import community.leaf.configvalues.bukkit.YamlAccessor;
 
+import java.nio.file.Path;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class Configs
 {
@@ -42,4 +44,10 @@ public class Configs
             },
             version -> Optional.of(String.valueOf(version))
         ));
+    
+    public static void couldNotLoad(Logger logger, Path path)
+    {
+        logger.warning("Couldn't load configuration: " + path.getFileName());
+        logger.warning("Default values will be used until the config file is repaired.");
+    }
 }
