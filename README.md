@@ -6,12 +6,11 @@
 [![](https://img.shields.io/badge/Java-11-orange)](# "Java Version: 11")
 [![](https://img.shields.io/github/v/release/DiscordSRV/Staff-Chat.svg?label=Release&color=ok)](https://github.com/DiscordSRV/Staff-Chat/releases/latest "Latest Release")
 [![](https://img.shields.io/spiget/downloads/44245?color=yellow&label=Spigot%20Downloads)](https://www.spigotmc.org/resources/discordsrv-staff-chat.44245/ "Spigot Resource Page")
+[![](https://img.shields.io/modrinth/dt/uD7Bzf5q?color=%2300af5c&label=Modrinth%20Downloads&logo=modrinth)](https://modrinth.com/plugin/uD7Bzf5q "Modrinth Project Page")
 
 </div>
 
-**Spigot:** https://www.spigotmc.org/resources/discordsrv-staff-chat.44245/
-
-DiscordSRV-Staff-Chat is a staff chat plugin that connects to a Discord channel (via [DiscordSRV](https://github.com/Scarsz/DiscordSRV)), allowing in-game staff to communicate with staff on Discord.
+DiscordSRV-Staff-Chat is a staff chat plugin that connects to a Discord channel (via [DiscordSRV](https://github.com/DiscordSRV/DiscordSRV)), allowing in-game staff to communicate with staff on Discord.
 
 ![](https://i.imgur.com/ssKGDTJ.gif) 
 
@@ -66,7 +65,8 @@ Channels: {"global": "000000000000000000", "staff-chat": "337769984539361281"}
 
 **Usage:**
 - `/leavestaffchat` - Stop receiving staff chat messages.
-    - This can be disabled in the config if you don't want staff members to turn off their staff chat.
+  - Useful to avoid leaking staff chat messages if a staff member is filming or streaming.
+  - This can be disabled in the config if you don't want staff members to turn off their staff chat.
 
 ### /joinstaffchat
 
@@ -78,6 +78,17 @@ Channels: {"global": "000000000000000000", "staff-chat": "337769984539361281"}
 
 **Usage:**
 - `/joinstaffchat` - Start receiving staff chat messages again if you previously left.
+
+### /togglestaffchatsounds
+
+![](https://i.imgur.com/MYbaRtZ.png)
+
+**Permission:** `staffchat.access`
+
+**Aliases:** `/toggleadminchatsounds`
+
+**Usage:**
+- `/togglestaffchatsounds` - Mute or unmute staff chat sounds for yourself.
 
 ### /managestaffchat
 
