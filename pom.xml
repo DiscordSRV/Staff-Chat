@@ -6,7 +6,7 @@
   
   <groupId>com.rezzedup</groupId>
   <artifactId>discordsrv-staff-chat</artifactId>
-  <version>1.4.5</version>
+  <version>1.4.6</version>
   
   <name>DiscordSRV-Staff-Chat</name>
   <inceptionYear>2017</inceptionYear>
@@ -48,14 +48,14 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.19-R0.1-SNAPSHOT</version>
+      <version>1.20.4-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <!-- DiscordSRV (via scarsz-nexus) -->
     <dependency>
       <groupId>com.discordsrv</groupId>
       <artifactId>discordsrv</artifactId>
-      <version>1.25.1</version>
+      <version>1.27.0</version>
       <scope>provided</scope>
     </dependency>
     <!-- PlaceholderAPI (via jitpack.io) -->
@@ -88,13 +88,13 @@
     <dependency>
       <groupId>com.github.zafarkhaja</groupId>
       <artifactId>java-semver</artifactId>
-      <version>0.9.0</version>
+      <version>0.10.2</version>
     </dependency>
     <!-- bStats (via maven-central) -->
     <dependency>
       <groupId>org.bstats</groupId>
       <artifactId>bstats-bukkit</artifactId>
-      <version>3.0.0</version>
+      <version>3.0.2</version>
     </dependency>
     <!-- Nullness Annotations: @NullOr (via maven-central) -->
     <dependency>
