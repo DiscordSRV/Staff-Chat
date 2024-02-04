@@ -1,6 +1,9 @@
 name: ${project.name}
 version: ${project.version}
+
 author: RezzedUp
+description: Staff chat plugin that hooks into DiscordSRV.
+website: https://modrinth.com/plugin/discordsrv-staff-chat
 
 main: com.rezzedup.discordsrv.staffchat.StaffChatPlugin
 api-version: 1.13
@@ -15,6 +18,11 @@ commands:
     usage: |-
       /<command> - toggle automatic staff chat
       /<command> <message> - send a message to the staff chat
+  managestaffchat:
+    aliases: [ discordsrv-staff-chat, discordsrvstaffchat, discordstaffchat, discordadminchat, manageadminchat ]
+    description: Manage and get information about DiscordSRV-Staff-Chat
+    permission: staffchat.manage
+    usage: /<command>
   leavestaffchat:
     aliases: [leaveadminchat]
     description: Leave the staff chat (stop receiving messages).
@@ -25,10 +33,10 @@ commands:
     description: Rejoin the staff chat (receive messages again).
     permission: staffchat.access
     usage: /<command>
-  managestaffchat:
-    aliases: [discordsrv-staff-chat, discordsrvstaffchat, discordstaffchat, discordadminchat, manageadminchat]
-    description: Manage and get information about DiscordSRV-Staff-Chat
-    permission: staffchat.manage
+  togglestaffchatsounds:
+    aliases: [toggleadminchatsounds]
+    description: Mute or unmute staff chat sounds for yourself.
+    permission: staffchat.access
     usage: /<command>
 
 permissions:

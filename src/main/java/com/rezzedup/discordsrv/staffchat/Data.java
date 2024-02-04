@@ -138,12 +138,15 @@ public class Data extends YamlDataFile implements StaffChatData
         
         static final YamlValue<Instant> LEFT_TOGGLE_DATE = YamlValue.ofInstant("toggles.left").maybe();
         
+        static final YamlValue<Boolean> MUTED_SOUNDS_TOGGLE = YamlValue.ofBoolean("toggles.muted-sounds").maybe();
+        
         private final StaffChatPlugin plugin;
         private final YamlDataFile yaml;
         private final UUID uuid;
         
         private @NullOr Instant auto;
         private @NullOr Instant left;
+        private boolean mutedSounds = false;
         
         Profile(StaffChatPlugin plugin, YamlDataFile yaml, UUID uuid)
         {
@@ -153,9 +156,11 @@ public class Data extends YamlDataFile implements StaffChatData
             
             if (plugin.config().getOrDefault(StaffChatConfig.PERSIST_TOGGLES))
             {
-                Sections.get(yaml.data(), path()).ifPresent(section -> {
+                Sections.get(yaml.data(), path()).ifPresent(section ->
+                {
                     auto = AUTO_TOGGLE_DATE.get(section).orElse(null);
                     left = LEFT_TOGGLE_DATE.get(section).orElse(null);
+                    mutedSounds = MUTED_SOUNDS_TOGGLE.get(section).orElse(false);
                 });
             }
         }
@@ -211,9 +216,21 @@ public class Data extends YamlDataFile implements StaffChatData
             updateStoredProfileData();
         }
         
+        @Override
+        public boolean receivesStaffChatSounds()
+        {
+            return !mutedSounds;
+        }
+        
+        @Override
+        public void receivesStaffChatSounds(boolean enabled)
+        {
+            mutedSounds = !enabled;
+        }
+        
         boolean hasDefaultSettings()
         {
-            return auto == null && left == null;
+            return auto == null && left == null && !mutedSounds;
         }
     
         void clearStoredProfileData()
@@ -238,6 +255,7 @@ public class Data extends YamlDataFile implements StaffChatData
         
             AUTO_TOGGLE_DATE.set(section, auto);
             LEFT_TOGGLE_DATE.set(section, left);
+            MUTED_SOUNDS_TOGGLE.set(section, mutedSounds);
             
             yaml.updated(true);
         }

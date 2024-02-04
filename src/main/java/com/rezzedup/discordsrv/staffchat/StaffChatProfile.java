@@ -45,6 +45,10 @@ public interface StaffChatProfile
     
     void receivesStaffChatMessages(boolean enabled);
     
+    boolean receivesStaffChatSounds();
+    
+    void receivesStaffChatSounds(boolean enabled);
+    
     default void toggleAutomaticStaffChat()
     {
         automaticStaffChat(!automaticStaffChat());

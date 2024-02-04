@@ -11,7 +11,7 @@
    Installation (Discord Setup):
 
    - 1) Install this plugin and DiscordSRV
-        Get DiscordSRV here: https://www.spigotmc.org/resources/discordsrv.18494/
+        Get DiscordSRV here: https://modrinth.com/plugin/discordsrv
 
    - 2) Add a "staff-chat" channel to DiscordSRV's config
         (in: /plugins/DiscordSRV/config.yml)
@@ -35,8 +35,8 @@
 
    ---
 
-   This config can be reloaded in-game with: '/managestaffchat reload'
-   (Be sure to give yourself permission to manage the staff chat with: 'staffchat.manage')
+   This config can be reloaded in-game with: `/managestaffchat reload`
+   (Be sure to give yourself permission to manage the staff chat with: `staffchat.manage`)
 
    ---
 

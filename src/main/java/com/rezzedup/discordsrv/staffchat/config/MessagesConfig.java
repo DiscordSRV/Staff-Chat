@@ -116,6 +116,18 @@ public class MessagesConfig extends YamlDataFile
         YamlValue.ofString("notifications.join.others")
             .defaults("%prefix% &2→&a %player% &njoined&a the staff chat");
     
+    public static final DefaultYamlValue<String> MUTE_SOUNDS_NOTIFICATION =
+        YamlValue.ofString("notifications.sounds.muted")
+            .defaults(
+                "%prefix% &4→&c You have &nmuted&c staff chat sounds"
+            );
+    
+    public static final DefaultYamlValue<String> UNMUTE_SOUNDS_NOTIFICATION =
+        YamlValue.ofString("notifications.sounds.unmuted")
+            .defaults(
+                "%prefix% &2→&a You have &nunmuted&a staff chat sounds"
+            );
+    
     @AggregatedResult
     public static final List<YamlValue<?>> VALUES =
         Aggregates.fromThisClass().constantsOfType(YamlValue.type()).toList();
@@ -245,6 +257,16 @@ public class MessagesConfig extends YamlDataFile
     {
         @NullOr DefaultYamlValue<String> others = (notifyOthers) ? JOIN_CHAT_NOTIFICATION_OTHERS : null;
         sendNotification(joiner, JOIN_CHAT_NOTIFICATION_SELF, others);
+    }
+    
+    public void notifySoundsMuted(Player player)
+    {
+        sendNotification(player, MUTE_SOUNDS_NOTIFICATION, null);
+    }
+    
+    public void notifySoundsUnmuted(Player player)
+    {
+        sendNotification(player, UNMUTE_SOUNDS_NOTIFICATION, null);
     }
     
     //

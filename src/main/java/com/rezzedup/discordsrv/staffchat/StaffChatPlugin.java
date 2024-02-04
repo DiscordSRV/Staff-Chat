@@ -26,6 +26,7 @@ import com.github.zafarkhaja.semver.Version;
 import com.rezzedup.discordsrv.staffchat.commands.ManageStaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.commands.StaffChatCommand;
 import com.rezzedup.discordsrv.staffchat.commands.ToggleStaffChatCommand;
+import com.rezzedup.discordsrv.staffchat.commands.ToggleStaffChatSoundsCommand;
 import com.rezzedup.discordsrv.staffchat.config.MessagesConfig;
 import com.rezzedup.discordsrv.staffchat.config.StaffChatConfig;
 import com.rezzedup.discordsrv.staffchat.listeners.DiscordSrvLoadedLaterListener;
@@ -102,10 +103,12 @@ public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, Buk
         events().register(new PlayerPrefixedMessageListener(this));
         events().register(new PlayerStaffChatToggleListener(this));
         
-        ToggleStaffChatCommand toggle = new ToggleStaffChatCommand(this);
         
         command("staffchat", new StaffChatCommand(this));
         command("managestaffchat", new ManageStaffChatCommand(this));
+        command("togglestaffchatsounds", new ToggleStaffChatSoundsCommand(this));
+        
+        ToggleStaffChatCommand toggle = new ToggleStaffChatCommand(this);
         command("leavestaffchat", toggle);
         command("joinstaffchat", toggle);
         
