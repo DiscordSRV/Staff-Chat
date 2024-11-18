@@ -28,29 +28,23 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class ToggleStaffChatCommand implements CommandExecutor
-{
-    private final StaffChatPlugin plugin;
-    
-    public ToggleStaffChatCommand(StaffChatPlugin plugin)
-    {
-        this.plugin = plugin;
-    }
-    
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
-    {
-        if (sender instanceof Player)
-        {
-            // Either join or leave so...
-            plugin.data().getOrCreateProfile((Player) sender)
-                .receivesStaffChatMessages(command.getName().contains("join"));
-        }
-        else
-        {
-            sender.sendMessage("Only players may run this command.");
-        }
-        
-        return true;
-    }
+public class ToggleStaffChatCommand implements CommandExecutor {
+	private final StaffChatPlugin plugin;
+	
+	public ToggleStaffChatCommand(StaffChatPlugin plugin) {
+		this.plugin = plugin;
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		if (sender instanceof Player) {
+			// Either join or leave so...
+			plugin.data().getOrCreateProfile((Player) sender)
+				.receivesStaffChatMessages(command.getName().contains("join"));
+		} else {
+			sender.sendMessage("Only players may run this command.");
+		}
+		
+		return true;
+	}
 }

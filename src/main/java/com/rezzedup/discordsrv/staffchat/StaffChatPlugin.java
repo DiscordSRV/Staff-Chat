@@ -57,287 +57,294 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, BukkitEventSource, StaffChatAPI
-{
-    // https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056
-    public static final int BSTATS = 11056;
-    
-    public static final String CHANNEL = "staff-chat";
-    
-    public static final String DISCORDSRV = "DiscordSRV";
-    
-    private @NullOr Version version;
-    private @NullOr Path pluginDirectoryPath;
-    private @NullOr Path backupsDirectoryPath;
-    private @NullOr Debugger debugger;
-    private @NullOr StaffChatConfig config;
-    private @NullOr MessagesConfig messages;
-    private @NullOr Data data;
-    private @NullOr Updater updater;
-    private @NullOr MessageProcessor processor;
-    private @NullOr DiscordStaffChatListener discordSrvHook;
-    
-    @Override
-    public void onEnable()
-    {
-        this.version = Version.valueOf(getDescription().getVersion());
-        
-        this.pluginDirectoryPath = getDataFolder().toPath();
-        this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
-        
-        this.debugger = new Debugger(this);
-        
-        debug(getClass()).header(() -> "Starting Plugin: " + this);
-        debugger().schedulePluginStatus(getClass(), "Enable");
-        
-        this.config = new StaffChatConfig(this);
-        this.messages = new MessagesConfig(this);
-    
-        loadConfigurationFiles();
-        
-        this.data = new Data(this);
-        this.updater = new Updater(this);
-        this.processor = new MessageProcessor(this);
-        
-        events().register(new JoinNotificationListener(this));
-        events().register(new PlayerPrefixedMessageListener(this));
-        events().register(new PlayerStaffChatToggleListener(this));
-        
-        
-        command("staffchat", new StaffChatCommand(this));
-        command("managestaffchat", new ManageStaffChatCommand(this));
-        command("togglestaffchatsounds", new ToggleStaffChatSoundsCommand(this));
-        
-        ToggleStaffChatCommand toggle = new ToggleStaffChatCommand(this);
-        command("leavestaffchat", toggle);
-        command("joinstaffchat", toggle);
-        
-        @NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
-        
-        if (discordSrv != null)
-        {
-            debug(getClass()).log("Enable", () -> "DiscordSRV is enabled");
-            subscribeToDiscordSrv(discordSrv);
-        }
-        else
-        {
-            debug(getClass()).log("Enable", () -> "DiscordSRV is not enabled: continuing without discord support");
-            
-            getLogger().warning("DiscordSRV is not currently enabled (messages will NOT be sent to Discord).");
-            getLogger().warning("Staff chat messages will still work in-game, however.");
-            
-            // Subscribe to DiscordSRV later because it somehow hasn't enabled yet.
-            events().register(new DiscordSrvLoadedLaterListener(this));
-        }
-        
-        startMetrics();
-        
-        // Display toggle message so that auto staff-chat users are aware that their chat is private again.
-        // Useful when hot loading this plugin on a live server.
-        onlineStaffChatParticipants()
-            .filter(data()::isAutomaticStaffChatEnabled)
-            .forEach(messages()::notifyAutoChatEnabled);
-    }
-    
-    @Override
-    public void onDisable()
-    {
-        debug(getClass()).log("Disable", () -> "Disabling plugin...");
-        
-        data().end();
-        updater().end();
-
-        // Display toggle message so that auto staff-chat users are aware that their chat is public again.
-        // Useful when selectively disabling this plugin on a live server.
-        onlineStaffChatParticipants()
-            .filter(data()::isAutomaticStaffChatEnabled)
-            .forEach(messages()::notifyAutoChatDisabled);
-        
-        if (isDiscordSrvHookEnabled())
-        {
-            debug(getClass()).log("Disable", () -> "Unsubscribing from DiscordSRV API (hook is enabled)");
-            
-            try { DiscordSRV.api.unsubscribe(discordSrvHook); }
-            catch (RuntimeException ignored) {} // Don't show a user-facing error if DiscordSRV is already unloaded.
-        }
-        
-        debug(getClass()).header(() -> "Disabled Plugin: " + this);
-    }
-    
-    private <T> T initialized(@NullOr T thing)
-    {
-        if (thing != null) { return thing; }
-        throw new IllegalStateException("Not initialized yet");
-    }
-    
-    @Override
-    public Plugin plugin() { return this; }
-    
-    public Version version() { return initialized(version); }
-    
-    public Path directory() { return initialized(pluginDirectoryPath); }
-    
-    public Path backups() { return initialized(backupsDirectoryPath); }
-    
-    public Debugger debugger() { return initialized(debugger); }
-    
-    public Debugger.DebugLogger debug(Class<?> clazz) { return debugger().debug(clazz); }
-    
-    public StaffChatConfig config() { return initialized(config); }
-    
-    public MessagesConfig messages() { return initialized(messages); }
-    
-    @Override
-    public Data data() { return initialized(data); }
-    
-    public Updater updater() { return initialized(updater); }
-    
-    @Override
-    public boolean isDiscordSrvHookEnabled() { return discordSrvHook != null; }
-    
-    public void subscribeToDiscordSrv(Plugin plugin)
-    {
-        debug(getClass()).log("Subscribe", () -> "Subscribing to DiscordSRV: " + plugin);
-        
-        if (!DISCORDSRV.equals(plugin.getName()) || !(plugin instanceof DiscordSRV))
-        {
-            throw debug(getClass()).failure("Subscribe", new IllegalArgumentException("Not DiscordSRV: " + plugin));
-        }
-        
-        if (isDiscordSrvHookEnabled())
-        {
-            throw debug(getClass()).failure("Subscribe", new IllegalStateException(
-                "Already subscribed to DiscordSRV. Did the server reload? ... If so, don't do that!"
-            ));
-        }
-        
-        DiscordSRV.api.subscribe(discordSrvHook = new DiscordStaffChatListener(this));
-        
-        getLogger().info("Subscribed to DiscordSRV: messages will be sent to Discord");
-    }
-    
-    @Override
-    public @NullOr TextChannel getDiscordChannelOrNull()
-    {
-        return (isDiscordSrvHookEnabled())
-            ? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL)
-            : null;
-    }
-    
-    private MessageProcessor processor() { return initialized(processor); }
-    
-    @Override
-    public void submitMessageFromConsole(String message)
-    {
-        processor().processConsoleChat(message);
-    }
-    
-    @Override
-    public void submitMessageFromPlayer(Player author, String message)
-    {
-        processor().processPlayerChat(author, message);
-    }
-    
-    @Override
-    public void submitMessageFromDiscord(User author, Message message)
-    {
-        processor().processDiscordChat(author, message);
-    }
-    
-    //
-    //
-    //
-    
-    private void loadConfigurationFiles()
-    {
-        // Explicitly load configs
-        config().reload();
-        messages().reload();
-        
-        // Upgrade & migrate legacy config if it exists
-        upgradeLegacyConfig();
-    }
-    
-    private void upgradeLegacyConfig(YamlDataFile file, List<YamlValue<?>> values)
-    {
-        file.migrateValues(values, getConfig());
-        
-        if (file.isNewlyCreated()) { file.save(); }
-        else { file.backupThenSave(backups(), "migrated"); }
-    }
-    
-    private void upgradeLegacyConfig()
-    {
-        Path legacyConfigPath = directory().resolve("config.yml");
-        if (!Files.isRegularFile(legacyConfigPath)) { return; }
-        
-        debug(getClass()).log("Upgrade Legacy Config", () ->
-            "Found legacy config, upgrading it to new configs..."
-        );
-        
-        upgradeLegacyConfig(config(), StaffChatConfig.VALUES);
-        upgradeLegacyConfig(messages(), MessagesConfig.VALUES);
-        
-        try
-        {
-            FileIO.backup(legacyConfigPath, backups().resolve("config.legacy.yml"));
-            Files.deleteIfExists(legacyConfigPath);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            debug(getClass()).log("Upgrade Legacy Config", () ->
-                "Failed to backup legacy config: " + e.getMessage()
-            );
-        }
-    }
-    
-    private void command(String name, CommandExecutor executor)
-    {
-        @NullOr PluginCommand command = getCommand(name);
-        
-        if (command == null)
-        {
-            debug(getClass()).log("Command: Setup", () ->
-                "Unable to register command /" + name + " because it is not defined in plugin.yml"
-            );
-            return;
-        }
-        
-        command.setExecutor(executor);
-        debug(getClass()).log("Command: Setup", () -> "Registered command executor for: /" + name);
-        
-        if (executor instanceof TabCompleter)
-        {
-            command.setTabCompleter((TabCompleter) executor);
-            debug(getClass()).log("Command: Setup", () -> "Registered tab completer for: /" + name);
-        }
-    }
-    
-    private void startMetrics()
-    {
-        if (!config().getOrDefault(StaffChatConfig.METRICS_ENABLED))
-        {
-            debug(getClass()).log("Metrics", () -> "Aborting: metrics are disabled in the config");
-            return;
-        }
-        
-        debug(getClass()).log("Metrics", () -> "Scheduling metrics to start one minute from now");
-        
-        // Start a minute later to get the most accurate data.
-        sync().delay(1).minutes().run(() ->
-        {
-            Metrics metrics = new Metrics(this, BSTATS);
-        
-            metrics.addCustomChart(new SimplePie(
-                "hooked_into_discordsrv", () -> String.valueOf(isDiscordSrvHookEnabled())
-            ));
-            
-            metrics.addCustomChart(new SimplePie(
-                "has_valid_staff-chat_channel", () -> String.valueOf(getDiscordChannelOrNull() != null)
-            ));
-            
-            debug(getClass()).log("Metrics", () -> "Started bStats metrics");
-        });
-    }
+public class StaffChatPlugin extends JavaPlugin implements BukkitTaskSource, BukkitEventSource, StaffChatAPI {
+	// https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056
+	public static final int BSTATS = 11056;
+	
+	public static final String CHANNEL = "staff-chat";
+	
+	public static final String DISCORDSRV = "DiscordSRV";
+	
+	private @NullOr Version version;
+	private @NullOr Path pluginDirectoryPath;
+	private @NullOr Path backupsDirectoryPath;
+	private @NullOr Debugger debugger;
+	private @NullOr StaffChatConfig config;
+	private @NullOr MessagesConfig messages;
+	private @NullOr Data data;
+	private @NullOr Updater updater;
+	private @NullOr MessageProcessor processor;
+	private @NullOr DiscordStaffChatListener discordSrvHook;
+	
+	@Override
+	public void onEnable() {
+		this.version = Version.valueOf(getDescription().getVersion());
+		
+		this.pluginDirectoryPath = getDataFolder().toPath();
+		this.backupsDirectoryPath = pluginDirectoryPath.resolve("backups");
+		
+		this.debugger = new Debugger(this);
+		
+		debug(getClass()).header(() -> "Starting Plugin: " + this);
+		debugger().schedulePluginStatus(getClass(), "Enable");
+		
+		this.config = new StaffChatConfig(this);
+		this.messages = new MessagesConfig(this);
+		
+		loadConfigurationFiles();
+		
+		this.data = new Data(this);
+		this.updater = new Updater(this);
+		this.processor = new MessageProcessor(this);
+		
+		events().register(new JoinNotificationListener(this));
+		events().register(new PlayerPrefixedMessageListener(this));
+		events().register(new PlayerStaffChatToggleListener(this));
+		
+		
+		command("staffchat", new StaffChatCommand(this));
+		command("managestaffchat", new ManageStaffChatCommand(this));
+		command("togglestaffchatsounds", new ToggleStaffChatSoundsCommand(this));
+		
+		ToggleStaffChatCommand toggle = new ToggleStaffChatCommand(this);
+		command("leavestaffchat", toggle);
+		command("joinstaffchat", toggle);
+		
+		@NullOr Plugin discordSrv = getServer().getPluginManager().getPlugin(DISCORDSRV);
+		
+		if (discordSrv != null) {
+			debug(getClass()).log("Enable", () -> "DiscordSRV is enabled");
+			subscribeToDiscordSrv(discordSrv);
+		} else {
+			debug(getClass()).log("Enable", () -> "DiscordSRV is not enabled: continuing without discord support");
+			
+			getLogger().warning("DiscordSRV is not currently enabled (messages will NOT be sent to Discord).");
+			getLogger().warning("Staff chat messages will still work in-game, however.");
+			
+			// Subscribe to DiscordSRV later because it somehow hasn't enabled yet.
+			events().register(new DiscordSrvLoadedLaterListener(this));
+		}
+		
+		startMetrics();
+		
+		// Display toggle message so that auto staff-chat users are aware that their chat is private again.
+		// Useful when hot loading this plugin on a live server.
+		onlineStaffChatParticipants()
+			.filter(data()::isAutomaticStaffChatEnabled)
+			.forEach(messages()::notifyAutoChatEnabled);
+	}
+	
+	@Override
+	public void onDisable() {
+		debug(getClass()).log("Disable", () -> "Disabling plugin...");
+		
+		data().end();
+		updater().end();
+		
+		// Display toggle message so that auto staff-chat users are aware that their chat is public again.
+		// Useful when selectively disabling this plugin on a live server.
+		onlineStaffChatParticipants()
+			.filter(data()::isAutomaticStaffChatEnabled)
+			.forEach(messages()::notifyAutoChatDisabled);
+		
+		if (isDiscordSrvHookEnabled()) {
+			debug(getClass()).log("Disable", () -> "Unsubscribing from DiscordSRV API (hook is enabled)");
+			
+			try {
+				DiscordSRV.api.unsubscribe(discordSrvHook);
+			} catch (RuntimeException ignored) {
+			} // Don't show a user-facing error if DiscordSRV is already unloaded.
+		}
+		
+		debug(getClass()).header(() -> "Disabled Plugin: " + this);
+	}
+	
+	private <T> T initialized(@NullOr T thing) {
+		if (thing != null) {
+			return thing;
+		}
+		throw new IllegalStateException("Not initialized yet");
+	}
+	
+	@Override
+	public Plugin plugin() {
+		return this;
+	}
+	
+	public Version version() {
+		return initialized(version);
+	}
+	
+	public Path directory() {
+		return initialized(pluginDirectoryPath);
+	}
+	
+	public Path backups() {
+		return initialized(backupsDirectoryPath);
+	}
+	
+	public Debugger debugger() {
+		return initialized(debugger);
+	}
+	
+	public Debugger.DebugLogger debug(Class<?> clazz) {
+		return debugger().debug(clazz);
+	}
+	
+	public StaffChatConfig config() {
+		return initialized(config);
+	}
+	
+	public MessagesConfig messages() {
+		return initialized(messages);
+	}
+	
+	@Override
+	public Data data() {
+		return initialized(data);
+	}
+	
+	public Updater updater() {
+		return initialized(updater);
+	}
+	
+	@Override
+	public boolean isDiscordSrvHookEnabled() {
+		return discordSrvHook != null;
+	}
+	
+	public void subscribeToDiscordSrv(Plugin plugin) {
+		debug(getClass()).log("Subscribe", () -> "Subscribing to DiscordSRV: " + plugin);
+		
+		if (!DISCORDSRV.equals(plugin.getName()) || !(plugin instanceof DiscordSRV)) {
+			throw debug(getClass()).failure("Subscribe", new IllegalArgumentException("Not DiscordSRV: " + plugin));
+		}
+		
+		if (isDiscordSrvHookEnabled()) {
+			throw debug(getClass()).failure("Subscribe", new IllegalStateException(
+				"Already subscribed to DiscordSRV. Did the server reload? ... If so, don't do that!"
+			));
+		}
+		
+		DiscordSRV.api.subscribe(discordSrvHook = new DiscordStaffChatListener(this));
+		
+		getLogger().info("Subscribed to DiscordSRV: messages will be sent to Discord");
+	}
+	
+	@Override
+	public @NullOr TextChannel getDiscordChannelOrNull() {
+		return (isDiscordSrvHookEnabled())
+			? DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(CHANNEL)
+			: null;
+	}
+	
+	private MessageProcessor processor() {
+		return initialized(processor);
+	}
+	
+	@Override
+	public void submitMessageFromConsole(String message) {
+		processor().processConsoleChat(message);
+	}
+	
+	@Override
+	public void submitMessageFromPlayer(Player author, String message) {
+		processor().processPlayerChat(author, message);
+	}
+	
+	@Override
+	public void submitMessageFromDiscord(User author, Message message) {
+		processor().processDiscordChat(author, message);
+	}
+	
+	//
+	//
+	//
+	
+	private void loadConfigurationFiles() {
+		// Explicitly load configs
+		config().reload();
+		messages().reload();
+		
+		// Upgrade & migrate legacy config if it exists
+		upgradeLegacyConfig();
+	}
+	
+	private void upgradeLegacyConfig(YamlDataFile file, List<YamlValue<?>> values) {
+		file.migrateValues(values, getConfig());
+		
+		if (file.isNewlyCreated()) {
+			file.save();
+		} else {
+			file.backupThenSave(backups(), "migrated");
+		}
+	}
+	
+	private void upgradeLegacyConfig() {
+		Path legacyConfigPath = directory().resolve("config.yml");
+		if (!Files.isRegularFile(legacyConfigPath)) {
+			return;
+		}
+		
+		debug(getClass()).log("Upgrade Legacy Config", () ->
+			"Found legacy config, upgrading it to new configs..."
+		);
+		
+		upgradeLegacyConfig(config(), StaffChatConfig.VALUES);
+		upgradeLegacyConfig(messages(), MessagesConfig.VALUES);
+		
+		try {
+			FileIO.backup(legacyConfigPath, backups().resolve("config.legacy.yml"));
+			Files.deleteIfExists(legacyConfigPath);
+		} catch (Exception e) {
+			e.printStackTrace();
+			debug(getClass()).log("Upgrade Legacy Config", () ->
+				"Failed to backup legacy config: " + e.getMessage()
+			);
+		}
+	}
+	
+	private void command(String name, CommandExecutor executor) {
+		@NullOr PluginCommand command = getCommand(name);
+		
+		if (command == null) {
+			debug(getClass()).log("Command: Setup", () ->
+				"Unable to register command /" + name + " because it is not defined in plugin.yml"
+			);
+			return;
+		}
+		
+		command.setExecutor(executor);
+		debug(getClass()).log("Command: Setup", () -> "Registered command executor for: /" + name);
+		
+		if (executor instanceof TabCompleter) {
+			command.setTabCompleter((TabCompleter) executor);
+			debug(getClass()).log("Command: Setup", () -> "Registered tab completer for: /" + name);
+		}
+	}
+	
+	private void startMetrics() {
+		if (!config().getOrDefault(StaffChatConfig.METRICS_ENABLED)) {
+			debug(getClass()).log("Metrics", () -> "Aborting: metrics are disabled in the config");
+			return;
+		}
+		
+		debug(getClass()).log("Metrics", () -> "Scheduling metrics to start one minute from now");
+		
+		// Start a minute later to get the most accurate data.
+		sync().delay(1).minutes().run(() ->
+		{
+			Metrics metrics = new Metrics(this, BSTATS);
+			
+			metrics.addCustomChart(new SimplePie(
+				"hooked_into_discordsrv", () -> String.valueOf(isDiscordSrvHookEnabled())
+			));
+			
+			metrics.addCustomChart(new SimplePie(
+				"has_valid_staff-chat_channel", () -> String.valueOf(getDiscordChannelOrNull() != null)
+			));
+			
+			debug(getClass()).log("Metrics", () -> "Started bStats metrics");
+		});
+	}
 }

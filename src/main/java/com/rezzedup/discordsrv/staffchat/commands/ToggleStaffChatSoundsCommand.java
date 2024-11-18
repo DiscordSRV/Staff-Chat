@@ -30,38 +30,35 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-public class ToggleStaffChatSoundsCommand implements CommandExecutor
-{
-    private final StaffChatPlugin plugin;
-    
-    public ToggleStaffChatSoundsCommand(StaffChatPlugin plugin)
-    {
-        this.plugin = plugin;
-    }
-    
-    @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args)
-    {
-        if (sender instanceof Player)
-        {
-            Player player = (Player) sender;
-            StaffChatProfile profile = plugin.data().getOrCreateProfile(player);
-            boolean toggle = !profile.receivesStaffChatSounds();
-            profile.receivesStaffChatSounds(toggle);
-            
-            plugin.debug(getClass()).log(() -> String.format(
-                "Player: %s (%s) has %s receiving staff chat sounds",
-                player.getName(), profile.uuid(), ((toggle) ? "enabled (unmuted)" : "disabled (muted)")
-            ));
-            
-            if (toggle) { plugin.messages().notifySoundsUnmuted(player); }
-            else { plugin.messages().notifySoundsMuted(player); }
-        }
-        else
-        {
-            sender.sendMessage("Only players may run this command.");
-        }
-        
-        return true;
-    }
+public class ToggleStaffChatSoundsCommand implements CommandExecutor {
+	private final StaffChatPlugin plugin;
+	
+	public ToggleStaffChatSoundsCommand(StaffChatPlugin plugin) {
+		this.plugin = plugin;
+	}
+	
+	@Override
+	public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+		if (sender instanceof Player) {
+			Player player = (Player) sender;
+			StaffChatProfile profile = plugin.data().getOrCreateProfile(player);
+			boolean toggle = !profile.receivesStaffChatSounds();
+			profile.receivesStaffChatSounds(toggle);
+			
+			plugin.debug(getClass()).log(() -> String.format(
+				"Player: %s (%s) has %s receiving staff chat sounds",
+				player.getName(), profile.uuid(), ((toggle) ? "enabled (unmuted)" : "disabled (muted)")
+			));
+			
+			if (toggle) {
+				plugin.messages().notifySoundsUnmuted(player);
+			} else {
+				plugin.messages().notifySoundsMuted(player);
+			}
+		} else {
+			sender.sendMessage("Only players may run this command.");
+		}
+		
+		return true;
+	}
 }

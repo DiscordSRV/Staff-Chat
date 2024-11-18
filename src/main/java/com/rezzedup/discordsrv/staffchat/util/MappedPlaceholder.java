@@ -31,63 +31,70 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-public class MappedPlaceholder
-{
-    public static Pattern PATTERN = Pattern.compile("%(.+?)%");
-    
-    protected final Map<String, Supplier<?>> placeholders = new HashMap<>();
-    
-    public String get(@NullOr String placeholder)
-    {
-        if (Strings.isEmptyOrNull(placeholder)) { return ""; }
-        
-        Supplier<?> supplier = placeholders.get(placeholder.toLowerCase(Locale.ROOT));
-        if (supplier == null) { return ""; }
-        
-        @NullOr Object result = null;
-        try { result = supplier.get(); }
-        catch (Exception e) { e.printStackTrace(); }
-        
-        return (result == null) ? "" : String.valueOf(result);
-    }
-    
-    private static String escape(String literal)
-    {
-        return literal.replace("\\", "\\\\").replace("$", "\\$");
-    }
-    
-    public String update(String message)
-    {
-        return PATTERN.matcher(message).replaceAll(mr -> {
-            String value = get(mr.group(1));
-            return escape((value.isEmpty()) ? mr.group() : value);
-        });
-    }
-    
-    public Putter map(String ... placeholders)
-    {
-        Objects.requireNonNull(placeholders, "placeholders");
-        if (placeholders.length <= 0) { throw new IllegalArgumentException("Empty placeholders array"); }
-        return new Putter(placeholders);
-    }
-    
-    public void inherit(MappedPlaceholder from) { placeholders.putAll(from.placeholders); }
-    
-    public class Putter
-    {
-        private final String[] aliases;
-        
-        private Putter(String[] aliases) { this.aliases = aliases; }
-        
-        public void to(Supplier<?> supplier)
-        {
-            Objects.requireNonNull(supplier, "supplier");
-            
-            for (String alias : aliases)
-            {
-                if (Strings.isEmptyOrNull(alias)) { continue; }
-                placeholders.put(alias.toLowerCase(Locale.ROOT), supplier);
-            }
-        }
-    }
+public class MappedPlaceholder {
+	public static Pattern PATTERN = Pattern.compile("%(.+?)%");
+	
+	protected final Map<String, Supplier<?>> placeholders = new HashMap<>();
+	
+	public String get(@NullOr String placeholder) {
+		if (Strings.isEmptyOrNull(placeholder)) {
+			return "";
+		}
+		
+		Supplier<?> supplier = placeholders.get(placeholder.toLowerCase(Locale.ROOT));
+		if (supplier == null) {
+			return "";
+		}
+		
+		@NullOr Object result = null;
+		try {
+			result = supplier.get();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return (result == null) ? "" : String.valueOf(result);
+	}
+	
+	private static String escape(String literal) {
+		return literal.replace("\\", "\\\\").replace("$", "\\$");
+	}
+	
+	public String update(String message) {
+		return PATTERN.matcher(message).replaceAll(mr -> {
+			String value = get(mr.group(1));
+			return escape((value.isEmpty()) ? mr.group() : value);
+		});
+	}
+	
+	public Putter map(String... placeholders) {
+		Objects.requireNonNull(placeholders, "placeholders");
+		if (placeholders.length <= 0) {
+			throw new IllegalArgumentException("Empty placeholders array");
+		}
+		return new Putter(placeholders);
+	}
+	
+	public void inherit(MappedPlaceholder from) {
+		placeholders.putAll(from.placeholders);
+	}
+	
+	public class Putter {
+		private final String[] aliases;
+		
+		private Putter(String[] aliases) {
+			this.aliases = aliases;
+		}
+		
+		public void to(Supplier<?> supplier) {
+			Objects.requireNonNull(supplier, "supplier");
+			
+			for (String alias : aliases) {
+				if (Strings.isEmptyOrNull(alias)) {
+					continue;
+				}
+				placeholders.put(alias.toLowerCase(Locale.ROOT), supplier);
+			}
+		}
+	}
 }

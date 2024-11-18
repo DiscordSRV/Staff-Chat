@@ -31,24 +31,22 @@ import pl.tlinkowski.annotation.basic.NullOr;
 
 import java.util.stream.Stream;
 
-public interface StaffChatAPI
-{
-    StaffChatData data();
-    
-    boolean isDiscordSrvHookEnabled();
-    
-    @NullOr TextChannel getDiscordChannelOrNull();
-    
-    void submitMessageFromConsole(String message);
-    
-    void submitMessageFromPlayer(Player author, String message);
-    
-    void submitMessageFromDiscord(User author, Message message);
-    
-    default Stream<? extends Player> onlineStaffChatParticipants()
-    {
-        return Bukkit.getOnlinePlayers().stream()
-            .filter(Permissions.ACCESS::allows)
-            .filter(data()::isReceivingStaffChatMessages);
-    }
+public interface StaffChatAPI {
+	StaffChatData data();
+	
+	boolean isDiscordSrvHookEnabled();
+	
+	@NullOr TextChannel getDiscordChannelOrNull();
+	
+	void submitMessageFromConsole(String message);
+	
+	void submitMessageFromPlayer(Player author, String message);
+	
+	void submitMessageFromDiscord(User author, Message message);
+	
+	default Stream<? extends Player> onlineStaffChatParticipants() {
+		return Bukkit.getOnlinePlayers().stream()
+			.filter(Permissions.ACCESS::allows)
+			.filter(data()::isReceivingStaffChatMessages);
+	}
 }

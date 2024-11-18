@@ -29,39 +29,33 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
-public class StaffChatCommand implements CommandExecutor
-{
-    private final StaffChatPlugin plugin;
-    
-    public StaffChatCommand(StaffChatPlugin plugin) { this.plugin = plugin; }
-    
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
-    {
-        if (args.length <= 0)
-        {
-            // Show usage to console (only players can enable auto chat)
-            if (!(sender instanceof Player)) { return false; }
-            plugin.data().getOrCreateProfile((Player) sender).toggleAutomaticStaffChat();
-        }
-        else
-        {
-            String message = String.join(" ", args);
-            
-            if (sender instanceof Player)
-            {
-                plugin.submitMessageFromPlayer((Player) sender, message);
-            }
-            else if (sender instanceof ConsoleCommandSender)
-            {
-                plugin.submitMessageFromConsole(message);
-            }
-            else
-            {
-                sender.sendMessage("Unsupported command sender type: " + sender.getClass().getSimpleName());
-            }
-        }
-        
-        return true;
-    }
+public class StaffChatCommand implements CommandExecutor {
+	private final StaffChatPlugin plugin;
+	
+	public StaffChatCommand(StaffChatPlugin plugin) {
+		this.plugin = plugin;
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		if (args.length <= 0) {
+			// Show usage to console (only players can enable auto chat)
+			if (!(sender instanceof Player)) {
+				return false;
+			}
+			plugin.data().getOrCreateProfile((Player) sender).toggleAutomaticStaffChat();
+		} else {
+			String message = String.join(" ", args);
+			
+			if (sender instanceof Player) {
+				plugin.submitMessageFromPlayer((Player) sender, message);
+			} else if (sender instanceof ConsoleCommandSender) {
+				plugin.submitMessageFromConsole(message);
+			} else {
+				sender.sendMessage("Unsupported command sender type: " + sender.getClass().getSimpleName());
+			}
+		}
+		
+		return true;
+	}
 }

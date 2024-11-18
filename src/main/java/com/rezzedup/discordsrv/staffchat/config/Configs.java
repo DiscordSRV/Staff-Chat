@@ -30,24 +30,27 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-public class Configs
-{
-    private Configs() { throw new UnsupportedOperationException(); }
-    
-    public static final Version NO_VERSION = Version.forIntegers(0,0,0);
-    
-    public static YamlAccessor<Version> VERSION =
-        YamlAccessor.of(Adapter.of(
-            object -> {
-                try { return Optional.of(Version.valueOf(String.valueOf(object))); }
-                catch (RuntimeException e) { return Optional.empty(); }
-            },
-            version -> Optional.of(String.valueOf(version))
-        ));
-    
-    public static void couldNotLoad(Logger logger, Path path)
-    {
-        logger.warning("Couldn't load configuration: " + path.getFileName());
-        logger.warning("Default values will be used until the config file is repaired.");
-    }
+public class Configs {
+	private Configs() {
+		throw new UnsupportedOperationException();
+	}
+	
+	public static final Version NO_VERSION = Version.forIntegers(0, 0, 0);
+	
+	public static YamlAccessor<Version> VERSION =
+		YamlAccessor.of(Adapter.of(
+			object -> {
+				try {
+					return Optional.of(Version.valueOf(String.valueOf(object)));
+				} catch (RuntimeException e) {
+					return Optional.empty();
+				}
+			},
+			version -> Optional.of(String.valueOf(version))
+		));
+	
+	public static void couldNotLoad(Logger logger, Path path) {
+		logger.warning("Couldn't load configuration: " + path.getFileName());
+		logger.warning("Default values will be used until the config file is repaired.");
+	}
 }

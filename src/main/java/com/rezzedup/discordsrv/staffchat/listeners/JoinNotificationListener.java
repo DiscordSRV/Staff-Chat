@@ -35,78 +35,73 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public class JoinNotificationListener implements Listener
-{
-    private final StaffChatPlugin plugin;
-    
-    public JoinNotificationListener(StaffChatPlugin plugin)
-    {
-        this.plugin = plugin;
-    }
-    
-    @EventListener(ListenerOrder.EARLY)
-    public void onPlayerJoin(PlayerJoinEvent event)
-    {
-        Player player = event.getPlayer();
-        plugin.data().updateProfile(player);
-        
-        Deque<Runnable> reminders = new ArrayDeque<>();
-        
-        if (plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_TOGGLE_ENABLED))
-        {
-            if (Permissions.ACCESS.allows(player))
-            {
-                if (plugin.data().isAutomaticStaffChatEnabled(player))
-                {
-                    plugin.debug(getClass()).log(event, () ->
-                        "Player " + event.getPlayer().getName() + " joined: " +
-                        "reminding them that they have automatic staff-chat enabled"
-                    );
-                    
-                    reminders.add(() -> plugin.messages().notifyAutoChatEnabled(player));
-                }
-                
-                if (!plugin.data().isReceivingStaffChatMessages(player))
-                {
-                    plugin.debug(getClass()).log(event, () ->
-                        "Player " + event.getPlayer().getName() + " joined: " +
-                        "reminding them that they previously left the staff-chat"
-                    );
-                    
-                    reminders.add(() -> plugin.messages().notifyLeaveChat(player, false));
-                }
-            }
-        }
-        
-        if (plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_UPDATE_AVAILABLE))
-        {
-            if (Permissions.MANAGE.allows(player))
-            {
-                plugin.updater().latestUpdateVersion().ifPresent(version ->
-                {
-                    plugin.debug(getClass()).log(event, () ->
-                        "Player " + event.getPlayer().getName() + " joined: " +
-                        "notifying them that a new update is available (" + version + ")"
-                    );
-                    
-                    reminders.add(() -> plugin.messages().notifyUpdateAvailable(player, version));
-                });
-            }
-        }
-        
-        if (reminders.isEmpty()) { return; }
-        
-        plugin.sync().delay(10).ticks().every(10).ticks().run(task ->
-        {
-            if (reminders.isEmpty()) { task.cancel(); }
-            else { reminders.pop().run(); }
-        });
-    }
-    
-    @EventListener(ListenerOrder.EARLY)
-    public void onPlayerQuit(PlayerQuitEvent event)
-    {
-        // Might as well update the profile (cleanup)
-        plugin.data().updateProfile(event.getPlayer());
-    }
+public class JoinNotificationListener implements Listener {
+	private final StaffChatPlugin plugin;
+	
+	public JoinNotificationListener(StaffChatPlugin plugin) {
+		this.plugin = plugin;
+	}
+	
+	@EventListener(ListenerOrder.EARLY)
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		Player player = event.getPlayer();
+		plugin.data().updateProfile(player);
+		
+		Deque<Runnable> reminders = new ArrayDeque<>();
+		
+		if (plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_TOGGLE_ENABLED)) {
+			if (Permissions.ACCESS.allows(player)) {
+				if (plugin.data().isAutomaticStaffChatEnabled(player)) {
+					plugin.debug(getClass()).log(event, () ->
+						"Player " + event.getPlayer().getName() + " joined: " +
+							"reminding them that they have automatic staff-chat enabled"
+					);
+					
+					reminders.add(() -> plugin.messages().notifyAutoChatEnabled(player));
+				}
+				
+				if (!plugin.data().isReceivingStaffChatMessages(player)) {
+					plugin.debug(getClass()).log(event, () ->
+						"Player " + event.getPlayer().getName() + " joined: " +
+							"reminding them that they previously left the staff-chat"
+					);
+					
+					reminders.add(() -> plugin.messages().notifyLeaveChat(player, false));
+				}
+			}
+		}
+		
+		if (plugin.config().getOrDefault(StaffChatConfig.NOTIFY_IF_UPDATE_AVAILABLE)) {
+			if (Permissions.MANAGE.allows(player)) {
+				plugin.updater().latestUpdateVersion().ifPresent(version ->
+				{
+					plugin.debug(getClass()).log(event, () ->
+						"Player " + event.getPlayer().getName() + " joined: " +
+							"notifying them that a new update is available (" + version + ")"
+					);
+					
+					reminders.add(() -> plugin.messages().notifyUpdateAvailable(player, version));
+				});
+			}
+		}
+		
+		if (reminders.isEmpty()) {
+			return;
+		}
+		
+		plugin.sync().delay(10).ticks().every(10).ticks().run(task ->
+		{
+			if (reminders.isEmpty()) {
+				task.cancel();
+			} else {
+				reminders.pop().run();
+			}
+		});
+	}
+	
+	@EventListener(ListenerOrder.EARLY)
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		// Might as well update the profile (cleanup)
+		plugin.data().updateProfile(event.getPlayer());
+	}
 }

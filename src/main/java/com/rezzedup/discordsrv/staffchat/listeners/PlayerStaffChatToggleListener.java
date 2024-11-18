@@ -37,117 +37,124 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import pl.tlinkowski.annotation.basic.NullOr;
 
 @SuppressWarnings("unused")
-public class PlayerStaffChatToggleListener implements Listener
-{
-    private final StaffChatPlugin plugin;
-    
-    public PlayerStaffChatToggleListener(StaffChatPlugin plugin)
-    {
-        this.plugin = plugin;
-    }
-    
-    @EventListener(ListenerOrder.FIRST)
-    public void onAutomaticChatFirst(AsyncPlayerChatEvent event)
-    {
-        if (plugin.data().isAutomaticStaffChatEnabled(event.getPlayer()))
-        {
-            event.setCancelled(true); // Cancel this message from getting sent to global chat.
-            // Handle message in a later listener order, allowing other plugins to modify the message.
-        }
-    }
-    
-    @EventListener(ListenerOrder.MONITOR)
-    public void onAutomaticChatMonitor(AsyncPlayerChatEvent event)
-    {
-        Player player = event.getPlayer();
-        if (!plugin.data().isAutomaticStaffChatEnabled(player)) { return; }
-        
-        event.setCancelled(true); // Cancel this message from getting sent to global chat.
-        // The event could've been uncancelled since cancelling it the first time.
-        
-        if (Permissions.ACCESS.allows(player))
-        {
-            plugin.debug(getClass()).log(event, () ->
-                "Player " + player.getName() + " has automatic staff-chat enabled"
-            );
-
-            // Handle this on the main thread next tick.
-            plugin.sync().run(() -> plugin.submitMessageFromPlayer(event.getPlayer(), event.getMessage()));
-        }
-        else
-        {
-            plugin.debug(getClass()).log(event, () ->
-                "Player " + player.getName() + " has automatic staff-chat enabled " +
-                "but they don't have permission to use the staff chat"
-            );
-
-            // Remove this non-staff profile (but in sync 'cus it calls an event).
-            plugin.sync().run(() -> {
-                plugin.data().updateProfile(player);
-                player.chat(event.getMessage());
-            });
-        }
-    }
-    
-    @EventListener(ListenerOrder.LAST)
-    @CancelledEvents(CancellationPolicy.REJECT)
-    public void onToggleAutoChat(AutoStaffChatToggleEvent event)
-    {
-        @NullOr Player player = event.getProfile().toPlayer().orElse(null);
-        
-        plugin.debug(getClass()).log(event, () -> {
-            String name = (player == null) ? "<Offline>" : player.getName();
-            String enabled = (event.isEnablingAutomaticChat()) ? "Enabled" : "Disabled";
-            return enabled + " automatic staff-chat for player: " + name + " (" + event.getProfile().uuid() + ")";
-        });
-        
-        if (player == null || event.isQuiet()) { return; }
-    
-        if (event.isEnablingAutomaticChat()) { plugin.messages().notifyAutoChatEnabled(player); }
-        else { plugin.messages().notifyAutoChatDisabled(player); }
-    }
-    
-    @EventListener(ListenerOrder.EARLY)
-    @CancelledEvents(CancellationPolicy.REJECT)
-    public void onLeavingStaffChatIsDisabled(ReceivingStaffChatToggleEvent event)
-    {
-        if (event.isJoiningStaffChat()) { return; }
-        if (plugin.config().getOrDefault(StaffChatConfig.LEAVING_STAFFCHAT_ENABLED)) { return; }
-        
-        // Leaving is disabled, cancel the event.
-        event.setCancelled(true);
-        
-        @NullOr Player player = event.getProfile().toPlayer().orElse(null);
-        
-        plugin.debug(getClass()).log(event, () -> {
-            String name = (player == null) ? "<Offline>" : player.getName();
-            return "Player: " + name + " (" + event.getProfile().uuid() + ") " +
-                   "tried to leave the staff chat, but leaving is disabled in the config";
-        });
-        
-        if (player == null || event.isQuiet()) { return; }
-        
-        plugin.messages().notifyLeavingChatIsDisabled(player);
-    }
-    
-    @EventListener(ListenerOrder.LAST)
-    @CancelledEvents(CancellationPolicy.REJECT)
-    public void onToggleReceivingMessages(ReceivingStaffChatToggleEvent event)
-    {
-        @NullOr Player player = event.getProfile().toPlayer().orElse(null);
-        
-        plugin.debug(getClass()).log(event, () -> {
-            String name = (player == null) ? "<Offline>" : player.getName();
-            String left = (event.isLeavingStaffChat()) ? "left" : "joined";
-            return "Player: " + name + " (" + event.getProfile().uuid() + ") " + left + " the staff-chat";
-        });
-        
-        if (player == null || event.isQuiet()) { return; }
-        
-        boolean broadcastToEveryone =
-            event.getProfile().sinceLeftStaffChat().isPresent() != event.isLeavingStaffChat();
-        
-        if (event.isLeavingStaffChat()) { plugin.messages().notifyLeaveChat(player, broadcastToEveryone); }
-        else { plugin.messages().notifyJoinChat(player, broadcastToEveryone); }
-    }
+public class PlayerStaffChatToggleListener implements Listener {
+	private final StaffChatPlugin plugin;
+	
+	public PlayerStaffChatToggleListener(StaffChatPlugin plugin) {
+		this.plugin = plugin;
+	}
+	
+	@EventListener(ListenerOrder.FIRST)
+	public void onAutomaticChatFirst(AsyncPlayerChatEvent event) {
+		if (plugin.data().isAutomaticStaffChatEnabled(event.getPlayer())) {
+			event.setCancelled(true); // Cancel this message from getting sent to global chat.
+			// Handle message in a later listener order, allowing other plugins to modify the message.
+		}
+	}
+	
+	@EventListener(ListenerOrder.MONITOR)
+	public void onAutomaticChatMonitor(AsyncPlayerChatEvent event) {
+		Player player = event.getPlayer();
+		if (!plugin.data().isAutomaticStaffChatEnabled(player)) {
+			return;
+		}
+		
+		event.setCancelled(true); // Cancel this message from getting sent to global chat.
+		// The event could've been uncancelled since cancelling it the first time.
+		
+		if (Permissions.ACCESS.allows(player)) {
+			plugin.debug(getClass()).log(event, () ->
+				"Player " + player.getName() + " has automatic staff-chat enabled"
+			);
+			
+			// Handle this on the main thread next tick.
+			plugin.sync().run(() -> plugin.submitMessageFromPlayer(event.getPlayer(), event.getMessage()));
+		} else {
+			plugin.debug(getClass()).log(event, () ->
+				"Player " + player.getName() + " has automatic staff-chat enabled " +
+					"but they don't have permission to use the staff chat"
+			);
+			
+			// Remove this non-staff profile (but in sync 'cus it calls an event).
+			plugin.sync().run(() -> {
+				plugin.data().updateProfile(player);
+				player.chat(event.getMessage());
+			});
+		}
+	}
+	
+	@EventListener(ListenerOrder.LAST)
+	@CancelledEvents(CancellationPolicy.REJECT)
+	public void onToggleAutoChat(AutoStaffChatToggleEvent event) {
+		@NullOr Player player = event.getProfile().toPlayer().orElse(null);
+		
+		plugin.debug(getClass()).log(event, () -> {
+			String name = (player == null) ? "<Offline>" : player.getName();
+			String enabled = (event.isEnablingAutomaticChat()) ? "Enabled" : "Disabled";
+			return enabled + " automatic staff-chat for player: " + name + " (" + event.getProfile().uuid() + ")";
+		});
+		
+		if (player == null || event.isQuiet()) {
+			return;
+		}
+		
+		if (event.isEnablingAutomaticChat()) {
+			plugin.messages().notifyAutoChatEnabled(player);
+		} else {
+			plugin.messages().notifyAutoChatDisabled(player);
+		}
+	}
+	
+	@EventListener(ListenerOrder.EARLY)
+	@CancelledEvents(CancellationPolicy.REJECT)
+	public void onLeavingStaffChatIsDisabled(ReceivingStaffChatToggleEvent event) {
+		if (event.isJoiningStaffChat()) {
+			return;
+		}
+		if (plugin.config().getOrDefault(StaffChatConfig.LEAVING_STAFFCHAT_ENABLED)) {
+			return;
+		}
+		
+		// Leaving is disabled, cancel the event.
+		event.setCancelled(true);
+		
+		@NullOr Player player = event.getProfile().toPlayer().orElse(null);
+		
+		plugin.debug(getClass()).log(event, () -> {
+			String name = (player == null) ? "<Offline>" : player.getName();
+			return "Player: " + name + " (" + event.getProfile().uuid() + ") " +
+				"tried to leave the staff chat, but leaving is disabled in the config";
+		});
+		
+		if (player == null || event.isQuiet()) {
+			return;
+		}
+		
+		plugin.messages().notifyLeavingChatIsDisabled(player);
+	}
+	
+	@EventListener(ListenerOrder.LAST)
+	@CancelledEvents(CancellationPolicy.REJECT)
+	public void onToggleReceivingMessages(ReceivingStaffChatToggleEvent event) {
+		@NullOr Player player = event.getProfile().toPlayer().orElse(null);
+		
+		plugin.debug(getClass()).log(event, () -> {
+			String name = (player == null) ? "<Offline>" : player.getName();
+			String left = (event.isLeavingStaffChat()) ? "left" : "joined";
+			return "Player: " + name + " (" + event.getProfile().uuid() + ") " + left + " the staff-chat";
+		});
+		
+		if (player == null || event.isQuiet()) {
+			return;
+		}
+		
+		boolean broadcastToEveryone =
+			event.getProfile().sinceLeftStaffChat().isPresent() != event.isLeavingStaffChat();
+		
+		if (event.isLeavingStaffChat()) {
+			plugin.messages().notifyLeaveChat(player, broadcastToEveryone);
+		} else {
+			plugin.messages().notifyJoinChat(player, broadcastToEveryone);
+		}
+	}
 }

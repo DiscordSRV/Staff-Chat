@@ -8,11 +8,11 @@ website: https://modrinth.com/plugin/discordsrv-staff-chat
 main: com.rezzedup.discordsrv.staffchat.StaffChatPlugin
 api-version: 1.13
 load: POSTWORLD
-softdepend: [DiscordSRV, PlaceholderAPI]
+softdepend: [ DiscordSRV, PlaceholderAPI ]
 
 commands:
   staffchat:
-    aliases: [adminchat, schat, achat, sc, ac, a]
+    aliases: [ adminchat, schat, achat, sc, ac, a ]
     description: Toggle or send a message to staff chat.
     permission: staffchat.access
     usage: |-
@@ -24,17 +24,17 @@ commands:
     permission: staffchat.manage
     usage: /<command>
   leavestaffchat:
-    aliases: [leaveadminchat]
+    aliases: [ leaveadminchat ]
     description: Leave the staff chat (stop receiving messages).
     permission: staffchat.access
     usage: /<command>
   joinstaffchat:
-    aliases: [joinadminchat]
+    aliases: [ joinadminchat ]
     description: Rejoin the staff chat (receive messages again).
     permission: staffchat.access
     usage: /<command>
   togglestaffchatsounds:
-    aliases: [toggleadminchatsounds]
+    aliases: [ toggleadminchatsounds ]
     description: Mute or unmute staff chat sounds for yourself.
     permission: staffchat.access
     usage: /<command>
