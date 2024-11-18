@@ -45,60 +45,60 @@ Channels: {"global": "000000000000000000", "staff-chat": "337769984539361281"}
 
 ### /staffchat
 
-![](https://i.imgur.com/ILwkaqa.gif)
-
-**Permission:** `staffchat.access`
-
-**Aliases:** `/adminchat`, `/schat`, `/achat`, `/sc`, `/ac`, and `/a`
-
-**Usage:**
-- `/staffchat` - Toggle automatic staff chat.
-- `/staffchat <message>` - Send a message to the staff chat.
+> ![](https://i.imgur.com/ILwkaqa.gif)
+> 
+> **Permission:** `staffchat.access`
+> 
+> **Aliases:** `/adminchat`, `/schat`, `/achat`, `/sc`, `/ac`, and `/a`
+> 
+> **Usage:**
+> - `/staffchat` - Toggle automatic staff chat.
+> - `/staffchat <message>` - Send a message to the staff chat.
 
 ### /leavestaffchat
 
-![](https://i.imgur.com/BO3fgmC.png)
-
-**Permission:** `staffchat.access`
-
-**Aliases:** `/leaveadminchat`
-
-**Usage:**
-- `/leavestaffchat` - Stop receiving staff chat messages.
-  - Useful to avoid leaking staff chat messages if a staff member is filming or streaming.
-  - This can be disabled in the config if you don't want staff members to turn off their staff chat.
+> ![](https://i.imgur.com/BO3fgmC.png)
+> 
+> **Permission:** `staffchat.access`
+> 
+> **Aliases:** `/leaveadminchat`
+> 
+> **Usage:**
+> - `/leavestaffchat` - Stop receiving staff chat messages.
+>   - Useful to avoid leaking staff chat messages if a staff member is filming or streaming.
+>   - This can be disabled in the config if you don't want staff members to turn off their staff chat.
 
 ### /joinstaffchat
 
-![](https://i.imgur.com/7EriNrS.png)
-
-**Permission:** `staffchat.access`
-
-**Aliases:** `/joinadminchat`
-
-**Usage:**
-- `/joinstaffchat` - Start receiving staff chat messages again if you previously left.
+> ![](https://i.imgur.com/7EriNrS.png)
+> 
+> **Permission:** `staffchat.access`
+> 
+> **Aliases:** `/joinadminchat`
+> 
+> **Usage:**
+> - `/joinstaffchat` - Start receiving staff chat messages again if you previously left.
 
 ### /togglestaffchatsounds
 
-![](https://i.imgur.com/MYbaRtZ.png)
-
-**Permission:** `staffchat.access`
-
-**Aliases:** `/toggleadminchatsounds`
-
-**Usage:**
-- `/togglestaffchatsounds` - Mute or unmute staff chat sounds for yourself.
+> ![](https://i.imgur.com/MYbaRtZ.png)
+> 
+> **Permission:** `staffchat.access`
+> 
+> **Aliases:** `/toggleadminchatsounds`
+> 
+> **Usage:**
+> - `/togglestaffchatsounds` - Mute or unmute staff chat sounds for yourself.
 
 ### /managestaffchat
 
-**Permission:** `staffchat.manage`
-
-**Aliases:** `/discordsrv-staff-chat`, `/discordsrvstaffchat`, `/discordstaffchat`, `/discordadminchat`, `/manageadminchat`
-
-**Usage:**
-- `/managestaffchat` - Display plugin information and command usage.
-- `/managestaffchat reload` - Reload configs.
-- `/managestaffchat debug` - Enable or disable debugging.
+> **Permission:** `staffchat.manage`
+> 
+> **Aliases:** `/discordsrv-staff-chat`, `/discordsrvstaffchat`, `/discordstaffchat`, `/discordadminchat`, `/manageadminchat`
+> 
+> **Usage:**
+> - `/managestaffchat` - Display plugin information and command usage.
+> - `/managestaffchat reload` - Reload configs.
+> - `/managestaffchat debug` - Enable or disable debugging.
 
 [![](https://bstats.org/signatures/bukkit/DiscordSRV-Staff-Chat.svg)](https://bstats.org/plugin/bukkit/DiscordSRV-Staff-Chat/11056)
